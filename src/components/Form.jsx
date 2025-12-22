@@ -202,6 +202,115 @@ export const Form = (props) => {
                   <input type="text" x-model="externalUiDownloadUrl" class="w-full px-4 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent" placeholder={t('externalUiDownloadUrlPlaceholder')} />
                 </div>
               </div>
+
+              {/* 关键词自动分组 */}
+              <div class="border-t border-gray-200 dark:border-gray-700 pt-4 mt-4">
+                <div class="flex items-center justify-between mb-3">
+                  <label class="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300">
+                    <i class="fas fa-tags text-primary-600 dark:text-primary-400"></i>
+                    <span>{t('keywordGrouping')}</span>
+                  </label>
+                  <button
+                    type="button"
+                    {...{'x-on:click': 'addKeywordGroup()'}}
+                    class="px-2.5 py-1 text-xs font-medium bg-primary-50 dark:bg-primary-900/20 text-primary-600 dark:text-primary-400 rounded hover:bg-primary-100 dark:hover:bg-primary-900/30 transition-colors flex items-center gap-1"
+                  >
+                    <i class="fas fa-plus text-xs"></i>
+                    <span>{t('addGroup')}</span>
+                  </button>
+                </div>
+
+                {/* 关键词分组列表 */}
+                <div class="space-y-3" {...{'x-show': 'keywordGroups.length > 0'}}>
+                  <template {...{'x-for': '(group, groupIndex) in keywordGroups', 'x-bind:key': 'groupIndex'}}>
+                    <div class="bg-gray-50 dark:bg-gray-700/30 rounded-lg p-3 space-y-2">
+                      <div class="flex gap-2">
+                        <input
+                          type="text"
+                          {...{'x-model': 'keywordGroups[groupIndex].name'}}
+                          placeholder={t('groupNamePlaceholder')}
+                          class="flex-1 px-2 py-1.5 text-sm bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded focus:ring-1 focus:ring-primary-500 focus:border-transparent"
+                        />
+                        <input
+                          type="text"
+                          {...{'x-model': 'keywordGroups[groupIndex].emoji'}}
+                          placeholder="🏢"
+                          maxlength="2"
+                          class="w-12 px-2 py-1.5 text-sm text-center bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded focus:ring-1 focus:ring-primary-500 focus:border-transparent"
+                        />
+                        <select
+                          {...{'x-model': 'keywordGroups[groupIndex].type'}}
+                          class="px-2 py-1.5 text-sm bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded focus:ring-1 focus:ring-primary-500 focus:border-transparent"
+                        >
+                          <option value="select">{t('select')}</option>
+                          <option value="urltest">{t('urltest')}</option>
+                        </select>
+                        <button
+                          type="button"
+                          {...{'x-on:click': 'removeKeywordGroup(groupIndex)'}}
+                          class="px-2 py-1.5 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-colors"
+                          title={t('remove')}
+                        >
+                          <i class="fas fa-trash text-xs"></i>
+                        </button>
+                      </div>
+
+                      <div class="flex gap-2 items-start">
+                        <label class="flex items-center gap-1.5 text-xs text-gray-600 dark:text-gray-400 whitespace-nowrap pt-1.5">
+                          <input
+                            type="checkbox"
+                            {...{'x-model': 'keywordGroups[groupIndex].includeDirect'}}
+                            class="w-3 h-3 text-primary-600 bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 rounded focus:ring-1 focus:ring-primary-500"
+                          />
+                          <span>DIRECT</span>
+                        </label>
+                        <div class="flex-1" {...{'x-data': "{ newKeyword: '' }"}}>
+                          <div class="flex gap-1 mb-1">
+                            <input
+                              type="text"
+                              {...{'x-model': 'newKeyword'}}
+                              {...{'x-on:keydown.enter.prevent': "if(newKeyword.trim()) addKeyword(groupIndex, newKeyword); newKeyword = '';"}}
+                              placeholder={t('addKeywordPlaceholder')}
+                              class="flex-1 px-2 py-1 text-xs bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded focus:ring-1 focus:ring-primary-500 focus:border-transparent"
+                            />
+                            <button
+                              type="button"
+                              {...{'x-on:click': "if(newKeyword.trim()) addKeyword(groupIndex, newKeyword); newKeyword = '';"}}
+                              class="px-2 py-1 text-xs bg-primary-600 text-white rounded hover:bg-primary-700 transition-colors"
+                            >
+                              <i class="fas fa-plus"></i>
+                            </button>
+                          </div>
+                          <div class="flex flex-wrap gap-1">
+                            <template {...{'x-for': '(keyword, keywordIndex) in keywordGroups[groupIndex].keywords', 'x-bind:key': 'keywordIndex'}}>
+                              <span class="inline-flex items-center gap-1 px-1.5 py-0.5 bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 text-xs rounded">
+                                <span {...{'x-text': 'keyword'}}></span>
+                                <button
+                                  type="button"
+                                  {...{'x-on:click': 'removeKeyword(groupIndex, keywordIndex)'}}
+                                  class="hover:text-primary-900 dark:hover:text-primary-100"
+                                >
+                                  <i class="fas fa-times text-xs"></i>
+                                </button>
+                              </span>
+                            </template>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </template>
+                </div>
+
+                {/* 空状态 */}
+                <div
+                  {...{'x-show': 'keywordGroups.length === 0'}}
+                  class="text-center py-4 text-gray-400 dark:text-gray-500 text-xs"
+                >
+                  <i class="fas fa-tags text-xl mb-1 opacity-50"></i>
+                  <p>{t('noKeywordGroups')}</p>
+                </div>
+              </div>
+
           </div>
           </div>
 

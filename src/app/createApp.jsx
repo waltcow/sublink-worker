@@ -77,6 +77,7 @@ export function createApp(bindings = {}) {
 
             const selectedRules = parseSelectedRules(c.req.query('selectedRules'));
             const customRules = parseJsonArray(c.req.query('customRules'));
+            const keywordGroups = parseJsonArray(c.req.query('keyword_groups'));
             const ua = c.req.query('ua') || DEFAULT_USER_AGENT;
             const groupByCountry = parseBooleanFlag(c.req.query('group_by_country'));
             const enableClashUI = parseBooleanFlag(c.req.query('enable_clash_ui'));
@@ -109,7 +110,8 @@ export function createApp(bindings = {}) {
                 enableClashUI,
                 externalController,
                 externalUiDownloadUrl,
-                singboxConfigVersion
+                singboxConfigVersion,
+                keywordGroups
             );
             await builder.build();
             return c.json(builder.config);
@@ -127,6 +129,7 @@ export function createApp(bindings = {}) {
 
             const selectedRules = parseSelectedRules(c.req.query('selectedRules'));
             const customRules = parseJsonArray(c.req.query('customRules'));
+            const keywordGroups = parseJsonArray(c.req.query('keyword_groups'));
             const ua = c.req.query('ua') || DEFAULT_USER_AGENT;
             const groupByCountry = parseBooleanFlag(c.req.query('group_by_country'));
             const enableClashUI = parseBooleanFlag(c.req.query('enable_clash_ui'));
@@ -151,7 +154,8 @@ export function createApp(bindings = {}) {
                 groupByCountry,
                 enableClashUI,
                 externalController,
-                externalUiDownloadUrl
+                externalUiDownloadUrl,
+                keywordGroups
             );
             await builder.build();
             return c.text(builder.formatConfig(), 200, {
@@ -171,6 +175,7 @@ export function createApp(bindings = {}) {
 
             const selectedRules = parseSelectedRules(c.req.query('selectedRules'));
             const customRules = parseJsonArray(c.req.query('customRules'));
+            const keywordGroups = parseJsonArray(c.req.query('keyword_groups'));
             const ua = c.req.query('ua') || DEFAULT_USER_AGENT;
             const groupByCountry = parseBooleanFlag(c.req.query('group_by_country'));
             const configId = c.req.query('configId');
@@ -189,7 +194,8 @@ export function createApp(bindings = {}) {
                 baseConfig,
                 lang,
                 ua,
-                groupByCountry
+                groupByCountry,
+                keywordGroups
             );
             builder.setSubscriptionUrl(c.req.url);
             await builder.build();

@@ -4,7 +4,7 @@ import { createTranslator } from '../i18n/index.js';
 import { generateRules, getOutbounds, PREDEFINED_RULE_SETS } from '../config/index.js';
 
 export class BaseConfigBuilder {
-    constructor(inputString, baseConfig, lang, userAgent, groupByCountry = false) {
+    constructor(inputString, baseConfig, lang, userAgent, groupByCountry = false, keywordGroups = []) {
         this.inputString = inputString;
         this.config = deepCopy(baseConfig);
         this.customRules = [];
@@ -13,6 +13,8 @@ export class BaseConfigBuilder {
         this.userAgent = userAgent;
         this.appliedOverrideKeys = new Set();
         this.groupByCountry = groupByCountry;
+        this.keywordGroups = keywordGroups || [];  // Keyword group definitions
+        this.filteredProxyNames = new Set();  // Names of proxies filtered by keyword groups
         this.providerUrls = [];  // URLs to use as providers (auto-sync)
     }
 
@@ -263,6 +265,10 @@ export class BaseConfigBuilder {
         throw new Error('addCountryGroups must be implemented in child class');
     }
 
+    addKeywordGroups() {
+        throw new Error('addKeywordGroups must be implemented in child class');
+    }
+
     addCustomItems(customItems) {
         const validItems = customItems.filter(item => item != null);
         validItems.forEach(item => {
@@ -283,6 +289,9 @@ export class BaseConfigBuilder {
         this.addNodeSelectGroup(proxyList);
         if (this.groupByCountry) {
             this.addCountryGroups();
+        }
+        if (this.keywordGroups && this.keywordGroups.length > 0) {
+            this.addKeywordGroups();
         }
         this.addOutboundGroups(outbounds, proxyList);
         this.addCustomRuleGroups(proxyList);

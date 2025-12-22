@@ -1,14 +1,14 @@
 
 import { SING_BOX_CONFIG, generateRuleSets, generateRules, getOutbounds, PREDEFINED_RULE_SETS } from '../config/index.js';
 import { BaseConfigBuilder } from './BaseConfigBuilder.js';
-import { deepCopy, groupProxiesByCountry } from '../utils.js';
+import { deepCopy, groupProxiesByCountry, groupProxiesByKeyword } from '../utils.js';
 import { addProxyWithDedup } from './helpers/proxyHelpers.js';
 import { buildSelectorMembers as buildSelectorMemberList, buildNodeSelectMembers, uniqueNames } from './helpers/groupBuilder.js';
 
 export class SingboxConfigBuilder extends BaseConfigBuilder {
-    constructor(inputString, selectedRules, customRules, baseConfig, lang, userAgent, groupByCountry = false, enableClashUI = false, externalController, externalUiDownloadUrl, singboxVersion = '1.12') {
+    constructor(inputString, selectedRules, customRules, baseConfig, lang, userAgent, groupByCountry = false, enableClashUI = false, externalController, externalUiDownloadUrl, singboxVersion = '1.12', keywordGroups = []) {
         const resolvedBaseConfig = baseConfig ?? SING_BOX_CONFIG;
-        super(inputString, resolvedBaseConfig, lang, userAgent, groupByCountry);
+        super(inputString, resolvedBaseConfig, lang, userAgent, groupByCountry, keywordGroups);
 
         this.selectedRules = selectedRules;
         this.customRules = customRules;
@@ -170,13 +170,15 @@ export class SingboxConfigBuilder extends BaseConfigBuilder {
         this.config.outbounds.unshift(group);
     }
 
-    buildSelectorMembers(proxyList = []) {
+    buildSelectorMembers(proxyList = [], { includeKeywordGroups = false } = {}) {
         return buildSelectorMemberList({
             proxyList,
             translator: this.t,
             groupByCountry: this.groupByCountry,
             manualGroupName: this.manualGroupName,
-            countryGroupNames: this.countryGroupNames
+            countryGroupNames: this.countryGroupNames,
+            keywordGroupNames: includeKeywordGroups ? (this.keywordGroupNames || []) : [],
+            filteredProxyNames: this.filteredProxyNames || new Set()
         });
     }
 
@@ -200,7 +202,7 @@ export class SingboxConfigBuilder extends BaseConfigBuilder {
     addCustomRuleGroups(proxyList) {
         if (Array.isArray(this.customRules)) {
             this.customRules.forEach(rule => {
-                const selectorMembers = this.buildSelectorMembers(proxyList);
+                const selectorMembers = this.buildSelectorMembers(proxyList, { includeKeywordGroups: true });
                 if (this.hasOutboundTag(rule.name)) return;
                 this.config.outbounds.push({
                     type: "selector",
@@ -280,6 +282,45 @@ export class SingboxConfigBuilder extends BaseConfigBuilder {
 
         this.countryGroupNames = countryGroupNames;
         this.manualGroupName = manualGroupName;
+    }
+
+    addKeywordGroups() {
+        const proxies = this.getProxies();
+        const result = groupProxiesByKeyword(proxies, this.keywordGroups, {
+            getName: proxy => this.getProxyName(proxy)
+        });
+        const keywordGroups = result.groups;
+        this.filteredProxyNames = result.filteredProxyNames;
+
+        const normalize = (s) => typeof s === 'string' ? s.trim() : s;
+        const existingTags = new Set((this.config.outbounds || []).map(o => normalize(o?.tag)).filter(Boolean));
+
+        const groups = Object.keys(keywordGroups).sort((a, b) => a.localeCompare(b));
+        const keywordGroupNames = [];
+
+        groups.forEach(groupKey => {
+            const { emoji, name, type, includeDirect, proxies: groupProxies } = keywordGroups[groupKey];
+            if (!groupProxies || groupProxies.length === 0) {
+                return;
+            }
+            const groupName = emoji ? `${emoji} ${name}` : name;
+            const norm = normalize(groupName);
+            if (!existingTags.has(norm)) {
+                const outbounds = includeDirect
+                    ? [...groupProxies, 'DIRECT']
+                    : groupProxies;
+
+                this.config.outbounds.push({
+                    tag: groupName,
+                    type: type === 'urltest' ? 'urltest' : 'selector',
+                    outbounds
+                });
+                existingTags.add(norm);
+            }
+            keywordGroupNames.push(groupName);
+        });
+
+        this.keywordGroupNames = keywordGroupNames;
     }
 
     formatConfig() {

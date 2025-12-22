@@ -1,17 +1,18 @@
 import { BaseConfigBuilder } from './BaseConfigBuilder.js';
-import { groupProxiesByCountry } from '../utils.js';
+import { groupProxiesByCountry, groupProxiesByKeyword } from '../utils.js';
 import { SURGE_CONFIG, SURGE_SITE_RULE_SET_BASEURL, SURGE_IP_RULE_SET_BASEURL, generateRules, getOutbounds, PREDEFINED_RULE_SETS } from '../config/index.js';
 import { addProxyWithDedup } from './helpers/proxyHelpers.js';
 import { buildSelectorMembers, buildNodeSelectMembers, uniqueNames } from './helpers/groupBuilder.js';
 
 export class SurgeConfigBuilder extends BaseConfigBuilder {
-    constructor(inputString, selectedRules, customRules, baseConfig, lang, userAgent, groupByCountry) {
+    constructor(inputString, selectedRules, customRules, baseConfig, lang, userAgent, groupByCountry, keywordGroups = []) {
         const resolvedBaseConfig = baseConfig ?? SURGE_CONFIG;
-        super(inputString, resolvedBaseConfig, lang, userAgent, groupByCountry);
+        super(inputString, resolvedBaseConfig, lang, userAgent, groupByCountry, keywordGroups);
         this.selectedRules = selectedRules;
         this.customRules = customRules;
         this.subscriptionUrl = null;
         this.countryGroupNames = [];
+        this.keywordGroupNames = [];
         this.manualGroupName = null;
     }
 
@@ -221,13 +222,15 @@ export class SurgeConfigBuilder extends BaseConfigBuilder {
         });
     }
 
-    buildAggregatedOptions(proxyList = []) {
+    buildAggregatedOptions(proxyList = [], { includeKeywordGroups = false } = {}) {
         return buildSelectorMembers({
             proxyList,
             translator: this.t,
             groupByCountry: this.groupByCountry,
             manualGroupName: this.manualGroupName,
-            countryGroupNames: this.countryGroupNames
+            countryGroupNames: this.countryGroupNames,
+            keywordGroupNames: includeKeywordGroups ? (this.keywordGroupNames || []) : [],
+            filteredProxyNames: this.filteredProxyNames || new Set()
         });
     }
 
@@ -271,7 +274,7 @@ export class SurgeConfigBuilder extends BaseConfigBuilder {
     addCustomRuleGroups(proxyList) {
         if (Array.isArray(this.customRules)) {
             this.customRules.forEach(rule => {
-                const options = this.buildAggregatedOptions(proxyList);
+                const options = this.buildAggregatedOptions(proxyList, { includeKeywordGroups: true });
                 if (this.hasProxyGroup(rule.name)) return;
                 this.config['proxy-groups'].push(
                     this.createProxyGroup(rule.name, 'select', options)
@@ -339,6 +342,49 @@ export class SurgeConfigBuilder extends BaseConfigBuilder {
         }
         this.countryGroupNames = countryGroupNames;
         this.manualGroupName = manualGroupName;
+    }
+
+    addKeywordGroups() {
+        const proxies = this.getProxies();
+        const result = groupProxiesByKeyword(proxies, this.keywordGroups, {
+            getName: proxy => this.getProxyName(proxy)
+        });
+        const keywordGroups = result.groups;
+        this.filteredProxyNames = result.filteredProxyNames;
+
+        const existing = new Set((this.config['proxy-groups'] || [])
+            .map(g => this.getGroupName(g)?.trim())
+            .filter(Boolean));
+
+        const groups = Object.keys(keywordGroups).sort((a, b) => a.localeCompare(b));
+        const keywordGroupNames = [];
+
+        groups.forEach(groupKey => {
+            const { emoji, name, type, includeDirect, proxies: groupProxies } = keywordGroups[groupKey];
+            if (!groupProxies || groupProxies.length === 0) {
+                return;
+            }
+            const groupName = emoji ? `${emoji} ${name}` : name;
+            const options = includeDirect
+                ? [...groupProxies, 'DIRECT']
+                : groupProxies;
+
+            if (!existing.has(groupName.trim())) {
+                if (type === 'urltest') {
+                    this.config['proxy-groups'].push(
+                        this.createProxyGroup(groupName, 'url-test', options, ', url=https://www.gstatic.com/generate_204, interval=300')
+                    );
+                } else {
+                    this.config['proxy-groups'].push(
+                        this.createProxyGroup(groupName, 'select', this.sanitizeOptions(options))
+                    );
+                }
+                existing.add(groupName.trim());
+            }
+            keywordGroupNames.push(groupName);
+        });
+
+        this.keywordGroupNames = keywordGroupNames;
     }
 
     formatConfig() {

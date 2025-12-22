@@ -1,7 +1,10 @@
 services:
   worker:
     image: ${SUBLINK_WORKER_IMAGE:-ghcr.io/7sageer/sublink-worker:latest}
-    pull_policy: always
+    build:
+      context: .
+      dockerfile: Dockerfile
+    pull_policy: if_not_present
     ports:
       - "8787:8787"
     environment:

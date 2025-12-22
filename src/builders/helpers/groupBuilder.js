@@ -39,20 +39,42 @@ export function buildNodeSelectMembers({ proxyList = [], translator, groupByCoun
     return withDirectReject(base);
 }
 
-export function buildSelectorMembers({ proxyList = [], translator, groupByCountry = false, manualGroupName, countryGroupNames = [] }) {
+export function buildSelectorMembers({
+    proxyList = [],
+    translator,
+    groupByCountry = false,
+    manualGroupName,
+    countryGroupNames = [],
+    keywordGroupNames = [],
+    filteredProxyNames = new Set()
+}) {
     if (!translator) {
         throw new Error('buildSelectorMembers requires a translator function');
     }
+    
+    // Filter out proxies that have been grouped by keywords
+    const unfilteredProxyList = proxyList.filter(proxyName => !filteredProxyNames.has(proxyName));
+    
     const base = groupByCountry
         ? [
             translator('outboundNames.Node Select'),
             translator('outboundNames.Auto Select'),
             ...(manualGroupName ? [manualGroupName] : []),
-            ...countryGroupNames
+            ...countryGroupNames,
+            ...keywordGroupNames
         ]
         : [
             translator('outboundNames.Node Select'),
-            ...proxyList
+            ...keywordGroupNames,
+            ...unfilteredProxyList
         ];
     return withDirectReject(base);
+}
+
+// 专门为关键词规则构建选择器成员
+export function buildKeywordRuleMembers({ keywordGroupName, translator }) {
+    if (!translator) {
+        throw new Error('buildKeywordRuleMembers requires a translator function');
+    }
+    return withDirectReject([keywordGroupName]);
 }

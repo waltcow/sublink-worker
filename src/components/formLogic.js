@@ -16,6 +16,7 @@ export const formLogicFn = (t) => {
             selectedRules: [],
             selectedPredefinedRule: 'balanced',
             groupByCountry: false,
+            keywordGroups: [],      // 关键词分组配置
             enableClashUI: false,
             externalController: '',
             externalUiDownloadUrl: '',
@@ -82,6 +83,16 @@ export const formLogicFn = (t) => {
                     }
                 }
 
+                // Load keyword groups
+                const savedKeywordGroups = localStorage.getItem('keywordGroups');
+                if (savedKeywordGroups) {
+                    try {
+                        this.keywordGroups = JSON.parse(savedKeywordGroups);
+                    } catch (e) {
+                        this.keywordGroups = [];
+                    }
+                }
+
                 // Initialize rules
                 this.applyPredefinedRule();
 
@@ -106,6 +117,7 @@ export const formLogicFn = (t) => {
                 });
                 this.$watch('customShortCode', val => localStorage.setItem('customShortCode', val));
                 this.$watch('accordionSections', val => localStorage.setItem('accordionSections', JSON.stringify(val)), { deep: true });
+                this.$watch('keywordGroups', val => localStorage.setItem('keywordGroups', JSON.stringify(val)), { deep: true });
             },
 
             toggleAccordion(section) {
@@ -235,6 +247,36 @@ export const formLogicFn = (t) => {
                 }
             },
 
+            // 关键词分组管理方法
+            addKeywordGroup() {
+                this.keywordGroups.push({
+                    name: '',
+                    emoji: '',
+                    keywords: [],
+                    type: 'select',
+                    includeDirect: false
+                });
+            },
+
+            removeKeywordGroup(index) {
+                this.keywordGroups.splice(index, 1);
+            },
+
+            addKeyword(groupIndex, keyword) {
+                if (!keyword || !keyword.trim()) return;
+                if (!this.keywordGroups[groupIndex].keywords) {
+                    this.keywordGroups[groupIndex].keywords = [];
+                }
+                const trimmedKeyword = keyword.trim();
+                if (!this.keywordGroups[groupIndex].keywords.includes(trimmedKeyword)) {
+                    this.keywordGroups[groupIndex].keywords.push(trimmedKeyword);
+                }
+            },
+
+            removeKeyword(groupIndex, keywordIndex) {
+                this.keywordGroups[groupIndex].keywords.splice(keywordIndex, 1);
+            },
+
             updateConfigIdInUrl(configId) {
                 const url = new URL(window.location.href);
                 if (configId) {
@@ -265,6 +307,7 @@ export const formLogicFn = (t) => {
                     if (this.enableClashUI) params.append('enable_clash_ui', 'true');
                     if (this.externalController) params.append('external_controller', this.externalController);
                     if (this.externalUiDownloadUrl) params.append('external_ui_download_url', this.externalUiDownloadUrl);
+                    if (this.keywordGroups && this.keywordGroups.length > 0) params.append('keyword_groups', JSON.stringify(this.keywordGroups));
 
                     // Add configId if present in URL
                     const urlParams = new URLSearchParams(window.location.search);
