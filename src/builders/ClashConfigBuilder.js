@@ -1,20 +1,21 @@
 import yaml from 'js-yaml';
 import { CLASH_CONFIG, generateRules, generateClashRuleSets, getOutbounds, PREDEFINED_RULE_SETS } from '../config/index.js';
 import { BaseConfigBuilder } from './BaseConfigBuilder.js';
-import { deepCopy, groupProxiesByCountry } from '../utils.js';
+import { deepCopy, groupProxiesByCountry, groupProxiesByKeyword } from '../utils.js';
 import { addProxyWithDedup } from './helpers/proxyHelpers.js';
 import { buildSelectorMembers, buildNodeSelectMembers, uniqueNames } from './helpers/groupBuilder.js';
 import { emitClashRules, sanitizeClashProxyGroups } from './helpers/clashConfigUtils.js';
 
 export class ClashConfigBuilder extends BaseConfigBuilder {
-    constructor(inputString, selectedRules, customRules, baseConfig, lang, userAgent, groupByCountry = false, enableClashUI = false, externalController, externalUiDownloadUrl) {
+    constructor(inputString, selectedRules, customRules, baseConfig, lang, userAgent, groupByCountry = false, enableClashUI = false, externalController, externalUiDownloadUrl, keywordGroups = []) {
         if (!baseConfig) {
             baseConfig = CLASH_CONFIG;
         }
-        super(inputString, baseConfig, lang, userAgent, groupByCountry);
+        super(inputString, baseConfig, lang, userAgent, groupByCountry, keywordGroups);
         this.selectedRules = selectedRules;
         this.customRules = customRules;
         this.countryGroupNames = [];
+        this.keywordGroupNames = [];
         this.manualGroupName = null;
         this.enableClashUI = enableClashUI;
         this.externalController = externalController;
@@ -313,13 +314,15 @@ export class ClashConfigBuilder extends BaseConfigBuilder {
         this.config['proxy-groups'].unshift(group);
     }
 
-    buildSelectGroupMembers(proxyList = []) {
+    buildSelectGroupMembers(proxyList = [], { includeKeywordGroups = false } = {}) {
         return buildSelectorMembers({
             proxyList,
             translator: this.t,
             groupByCountry: this.groupByCountry,
             manualGroupName: this.manualGroupName,
-            countryGroupNames: this.countryGroupNames
+            countryGroupNames: this.countryGroupNames,
+            keywordGroupNames: includeKeywordGroups ? (this.keywordGroupNames || []) : [],
+            filteredProxyNames: this.filteredProxyNames || new Set()
         });
     }
 
@@ -344,7 +347,7 @@ export class ClashConfigBuilder extends BaseConfigBuilder {
             this.customRules.forEach(rule => {
                 const name = this.t(`outboundNames.${rule.name}`);
                 if (!this.hasProxyGroup(name)) {
-                    const proxies = this.buildSelectGroupMembers(proxyList);
+                    const proxies = this.buildSelectGroupMembers(proxyList, { includeKeywordGroups: true });
                     this.config['proxy-groups'].push({
                         type: "select",
                         name,
@@ -423,6 +426,54 @@ export class ClashConfigBuilder extends BaseConfigBuilder {
         }
         this.countryGroupNames = countryGroupNames;
         this.manualGroupName = manualGroupName;
+    }
+
+    addKeywordGroups() {
+        const proxies = this.getProxies();
+        const result = groupProxiesByKeyword(proxies, this.keywordGroups, {
+            getName: proxy => this.getProxyName(proxy)
+        });
+        const keywordGroups = result.groups;
+        this.filteredProxyNames = result.filteredProxyNames;
+
+        const normalize = (s) => typeof s === 'string' ? s.trim() : s;
+        const existingNames = new Set((this.config['proxy-groups'] || []).map(g => normalize(g?.name)).filter(Boolean));
+
+        const groups = Object.keys(keywordGroups).sort((a, b) => a.localeCompare(b));
+        const keywordGroupNames = [];
+
+        groups.forEach(groupKey => {
+            const { emoji, name, type, includeDirect, proxies: groupProxies } = keywordGroups[groupKey];
+            if (!groupProxies || groupProxies.length === 0) {
+                return;
+            }
+            const groupName = emoji ? `${emoji} ${name}` : name;
+            const norm = normalize(groupName);
+            if (!existingNames.has(norm)) {
+                const proxyList = includeDirect
+                    ? [...groupProxies, 'DIRECT']
+                    : groupProxies;
+
+                const groupConfig = {
+                    name: groupName,
+                    type: type === 'urltest' ? 'url-test' : 'select',
+                    proxies: proxyList
+                };
+
+                // Add url-test specific config
+                if (type === 'urltest') {
+                    groupConfig.url = 'https://www.gstatic.com/generate_204';
+                    groupConfig.interval = 300;
+                    groupConfig.lazy = false;
+                }
+
+                this.config['proxy-groups'].push(groupConfig);
+                existingNames.add(norm);
+            }
+            keywordGroupNames.push(groupName);
+        });
+
+        this.keywordGroupNames = keywordGroupNames;
     }
 
     // 生成规则

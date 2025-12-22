@@ -209,6 +209,106 @@ export function groupProxiesByCountry(proxies, { getName } = {}) {
 
 	return grouped;
 }
+
+/**
+ * Group proxies by keyword matching
+ * @param {Array} proxies - Array of proxy objects
+ * @param {Array} keywordGroups - Array of keyword group definitions
+ * @param {Object} options - Options for name extraction
+ * @returns {Object} - { groups: grouped proxies by keyword, filteredProxyNames: Set of filtered proxy names }
+ */
+export function groupProxiesByKeyword(proxies, keywordGroups = [], { getName } = {}) {
+	const extractor = typeof getName === 'function'
+		? getName
+		: (proxy) => {
+			if (proxy == null) return undefined;
+			if (typeof proxy === 'string') {
+				return proxy;
+			}
+			if (typeof proxy === 'object') {
+				return proxy.name ?? proxy.tag ?? proxy.id ?? proxy.ps;
+			}
+			return undefined;
+		};
+
+	const normalizeName = (value) => {
+		if (typeof value !== 'string') {
+			return undefined;
+		}
+		const trimmed = value.trim();
+		if (!trimmed) {
+			return undefined;
+		}
+		const eqIndex = trimmed.indexOf('=');
+		if (eqIndex > -1) {
+			const beforeEq = trimmed.slice(0, eqIndex).trim();
+			if (beforeEq) {
+				return beforeEq;
+			}
+		}
+		return trimmed;
+	};
+
+	const grouped = {};
+	const filteredProxyNames = new Set();
+
+	if (!Array.isArray(proxies) || proxies.length === 0 || !Array.isArray(keywordGroups) || keywordGroups.length === 0) {
+		return { groups: grouped, filteredProxyNames };
+	}
+
+	// Initialize groups
+	keywordGroups.forEach(group => {
+		if (group.name) {
+			grouped[group.name] = {
+				name: group.name,
+				emoji: group.emoji || '📁',
+				type: group.type || 'select',
+				includeDirect: group.includeDirect !== undefined ? group.includeDirect : false,
+				keywords: group.keywords || [],
+				proxies: []
+			};
+		}
+	});
+
+	// Match proxies to groups
+	proxies.forEach(proxy => {
+		const rawName = extractor(proxy);
+		const proxyName = normalizeName(rawName);
+		if (!proxyName) {
+			return;
+		}
+
+		// Check each keyword group
+		keywordGroups.forEach(group => {
+			if (!group.name || !Array.isArray(group.keywords)) {
+				return;
+			}
+
+			// Check if proxy name contains any of the keywords
+			const matched = group.keywords.some(keyword => {
+				if (typeof keyword === 'string') {
+					return proxyName.toLowerCase().includes(keyword.toLowerCase());
+				}
+				return false;
+			});
+
+			if (matched && grouped[group.name]) {
+				grouped[group.name].proxies.push(proxyName);
+				filteredProxyNames.add(proxyName);
+			}
+		});
+	});
+
+	// Remove empty groups
+	Object.keys(grouped).forEach(groupName => {
+		if (grouped[groupName].proxies.length === 0) {
+			delete grouped[groupName];
+		}
+	});
+
+	return { groups: grouped, filteredProxyNames };
+}
+
 export function deepCopy(obj) {
 	if (obj === null || typeof obj !== 'object') {
 		return obj;
