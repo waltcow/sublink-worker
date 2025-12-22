@@ -4,7 +4,7 @@
   <h1><b>Sublink Worker</b></h1>
   <h5><i>One Worker, All Subscriptions</i></h5>
 
-  <p><b>A lightweight subscription converter and manager for proxy protocols, deployable on Cloudflare Workers, Vercel, Node.js, or Docker.</b></p>
+  <p><b>A lightweight subscription converter and manager for proxy protocols, deployable on Cloudflare Workers, Node.js, or Docker.</b></p>
 
   <a href="https://trendshift.io/repositories/12291" target="_blank">
     <img src="https://trendshift.io/api/badge/repositories/12291" alt="7Sageer%2Fsublink-worker | Trendshift" width="250" height="55"/>
@@ -12,12 +12,9 @@
 
   <br>
 
-<p style="display: flex; align-items: center; gap: 10px;">
+<p>
   <a href="https://deploy.workers.cloudflare.com/?url=https://github.com/7Sageer/sublink-worker">
     <img src="https://deploy.workers.cloudflare.com/button" alt="Deploy to Cloudflare Workers" style="height: 32px;"/>
-  </a>
-  <a href="https://vercel.com/new/clone?repository-url=https://github.com/7Sageer/sublink-worker&env=KV_REST_API_URL,KV_REST_API_TOKEN&envDescription=Vercel%20KV%20credentials%20for%20data%20storage&envLink=https://vercel.com/docs/storage/vercel-kv">
-    <img src="https://vercel.com/button" alt="Deploy to Vercel" style="height: 32px;"/>
   </a>
 </p>
 
@@ -42,7 +39,6 @@
 
 ### Alternative Runtimes
 - **Node.js**: `npm run build:node && node dist/node-server.cjs`
-- **Vercel**: `vercel deploy` (configure KV in project settings)
 - **Docker**: `docker pull ghcr.io/7sageer/sublink-worker:latest`
 - **Docker Compose**: `docker compose up -d` (includes Redis)
 

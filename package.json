@@ -4,7 +4,6 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "node scripts/build-vercel.mjs",
     "deploy": "npm run setup-kv && wrangler deploy",
     "dev": "wrangler dev",
     "start": "wrangler dev",
