@@ -77,7 +77,8 @@ const OUTBOUND_POLICY_ALIAS = {
 	'HBO': 'Max',
 	'Amazon': 'Global Media',
 	'Bahamut': 'Asian Media',
-	'Spotify': 'Spotify'
+	'Spotify': 'Spotify',
+	'Social Media': 'Social Media'
 };
 
 // 地区分组顺序（用于策略组成员排列）
@@ -321,6 +322,11 @@ export class QuanxConfigBuilder extends BaseConfigBuilder {
 			return ['Outside', 'direct'];
 		}
 
+		// Social Media: Outside, 地区..., direct
+		if (policyName === 'Social Media') {
+			return ['Outside', ...orderedRegions, 'direct'];
+		}
+
 		// Google: Outside, 地区...
 		if (policyName === 'Google') {
 			return ['Outside', ...orderedRegions, 'direct'];
@@ -385,7 +391,7 @@ export class QuanxConfigBuilder extends BaseConfigBuilder {
 			'AdBlock', 'Outside', 'Mainland', 'Apple', 'Google', 'Github', 'AI Suite',
 			'China Media', 'Asian Media', 'Global Media',
 			'Netflix', 'Disney+', 'YouTube', 'Max', 'Spotify',
-			'Telegram', 'Crypto', 'Discord', 'Microsoft', 'PayPal', 'Speedtest',
+			'Social Media', 'Telegram', 'Crypto', 'Discord', 'Microsoft', 'PayPal', 'Speedtest',
 			'Others'
 		];
 
