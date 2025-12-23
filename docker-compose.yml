@@ -12,6 +12,15 @@ services:
       REDIS_PORT: 6379
       REDIS_KEY_PREFIX: sublink
       CONFIG_TTL_SECONDS: 2592000
+      # Default exclude keywords for node filtering (applied to all subscriptions)
+      # Supports comma-separated string or JSON array format
+      # Examples:
+      #   DEFAULT_EXCLUDE: "测试,过期,试用"
+      #   DEFAULT_EXCLUDE: '["测试","过期","试用"]'
+      DEFAULT_EXCLUDE: ${DEFAULT_EXCLUDE:-}
+      # Subscription cache TTL in seconds (default: 300 = 5 minutes)
+      # Set to 0 to disable caching
+      SUBSCRIPTION_CACHE_TTL: ${SUBSCRIPTION_CACHE_TTL:-300}
     depends_on:
       - redis
   redis:

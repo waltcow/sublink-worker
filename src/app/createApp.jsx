@@ -84,6 +84,11 @@ export function createApp(bindings = {}) {
             const enableClashUI = parseBooleanFlag(c.req.query('enable_clash_ui'));
             const externalController = c.req.query('external_controller');
             const externalUiDownloadUrl = c.req.query('external_ui_download_url');
+            const enableProviders = parseBooleanFlag(c.req.query('enable_providers'));
+            // Use runtime config default_exclude, allow API parameter to override
+            const defaultExclude = c.req.query('default_exclude')
+                ? parseDefaultExclude(c.req.query('default_exclude'))
+                : runtime.config.defaultExclude;
             const configId = c.req.query('configId');
             const lang = c.get('lang');
 
@@ -112,7 +117,11 @@ export function createApp(bindings = {}) {
                 externalController,
                 externalUiDownloadUrl,
                 singboxConfigVersion,
-                keywordGroups
+                keywordGroups,
+                enableProviders,
+                defaultExclude,
+                runtime.kv,
+                runtime.config.subscriptionCacheTtl
             );
             await builder.build();
             return c.json(builder.config);
@@ -136,6 +145,11 @@ export function createApp(bindings = {}) {
             const enableClashUI = parseBooleanFlag(c.req.query('enable_clash_ui'));
             const externalController = c.req.query('external_controller');
             const externalUiDownloadUrl = c.req.query('external_ui_download_url');
+            const enableProviders = parseBooleanFlag(c.req.query('enable_providers'));
+            // Use runtime config default_exclude, allow API parameter to override
+            const defaultExclude = c.req.query('default_exclude')
+                ? parseDefaultExclude(c.req.query('default_exclude'))
+                : runtime.config.defaultExclude;
             const configId = c.req.query('configId');
             const lang = c.get('lang');
 
@@ -156,7 +170,11 @@ export function createApp(bindings = {}) {
                 enableClashUI,
                 externalController,
                 externalUiDownloadUrl,
-                keywordGroups
+                keywordGroups,
+                enableProviders,
+                defaultExclude,
+                runtime.kv,
+                runtime.config.subscriptionCacheTtl
             );
             await builder.build();
             return c.text(builder.formatConfig(), 200, {
@@ -179,6 +197,10 @@ export function createApp(bindings = {}) {
             const keywordGroups = parseJsonArray(c.req.query('keyword_groups'));
             const ua = c.req.query('ua') || DEFAULT_USER_AGENT;
             const groupByCountry = parseBooleanFlag(c.req.query('group_by_country'));
+            // Use runtime config default_exclude, allow API parameter to override
+            const defaultExclude = c.req.query('default_exclude')
+                ? parseDefaultExclude(c.req.query('default_exclude'))
+                : runtime.config.defaultExclude;
             const configId = c.req.query('configId');
             const lang = c.get('lang');
 
@@ -196,7 +218,10 @@ export function createApp(bindings = {}) {
                 lang,
                 ua,
                 groupByCountry,
-                keywordGroups
+                keywordGroups,
+                defaultExclude,
+                runtime.kv,
+                runtime.config.subscriptionCacheTtl
             );
             builder.setSubscriptionUrl(c.req.url);
             await builder.build();
@@ -218,6 +243,10 @@ export function createApp(bindings = {}) {
             const selectedRules = parseSelectedRules(c.req.query('selectedRules'));
             const customRules = parseJsonArray(c.req.query('customRules'));
             const ua = c.req.query('ua') || DEFAULT_USER_AGENT;
+            // Use runtime config default_exclude, allow API parameter to override
+            const defaultExclude = c.req.query('default_exclude')
+                ? parseDefaultExclude(c.req.query('default_exclude'))
+                : runtime.config.defaultExclude;
             const configId = c.req.query('configId');
             const lang = c.get('lang');
 
@@ -233,7 +262,10 @@ export function createApp(bindings = {}) {
                 customRules,
                 baseConfig,
                 lang,
-                ua
+                ua,
+                defaultExclude,
+                runtime.kv,
+                runtime.config.subscriptionCacheTtl
             );
             await builder.build();
             return c.text(builder.formatConfig());
@@ -412,6 +444,25 @@ function parseJsonArray(raw) {
     } catch {
         return [];
     }
+}
+
+function parseDefaultExclude(raw) {
+    if (!raw) return [];
+    // Support both comma-separated string and JSON array
+    if (typeof raw === 'string') {
+        // Try parse as JSON first
+        try {
+            const parsed = JSON.parse(raw);
+            if (Array.isArray(parsed)) {
+                return parsed.filter(k => typeof k === 'string' && k.trim().length > 0);
+            }
+        } catch {
+            // Not JSON, treat as comma-separated string
+        }
+        // Parse as comma-separated string
+        return raw.split(',').map(k => k.trim()).filter(k => k.length > 0);
+    }
+    return [];
 }
 
 function parseBooleanFlag(value) {

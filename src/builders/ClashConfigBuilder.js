@@ -7,11 +7,11 @@ import { buildSelectorMembers, buildNodeSelectMembers, uniqueNames } from './hel
 import { emitClashRules, sanitizeClashProxyGroups } from './helpers/clashConfigUtils.js';
 
 export class ClashConfigBuilder extends BaseConfigBuilder {
-    constructor(inputString, selectedRules, customRules, baseConfig, lang, userAgent, groupByCountry = false, enableClashUI = false, externalController, externalUiDownloadUrl, keywordGroups = []) {
+    constructor(inputString, selectedRules, customRules, baseConfig, lang, userAgent, groupByCountry = false, enableClashUI = false, externalController, externalUiDownloadUrl, keywordGroups = [], enableProviders = false, defaultExclude = [], kv = null, subscriptionCacheTtl = 300, subscriptionTimeout = 10000, subscriptionMaxRetries = 3) {
         if (!baseConfig) {
             baseConfig = CLASH_CONFIG;
         }
-        super(inputString, baseConfig, lang, userAgent, groupByCountry, keywordGroups);
+        super(inputString, baseConfig, lang, userAgent, groupByCountry, keywordGroups, defaultExclude, kv, subscriptionCacheTtl, subscriptionTimeout, subscriptionMaxRetries);
         this.selectedRules = selectedRules;
         this.customRules = customRules;
         this.countryGroupNames = [];
@@ -20,15 +20,16 @@ export class ClashConfigBuilder extends BaseConfigBuilder {
         this.enableClashUI = enableClashUI;
         this.externalController = externalController;
         this.externalUiDownloadUrl = externalUiDownloadUrl;
+        this.enableProviders = enableProviders;
     }
 
     /**
      * Check if subscription format is compatible for use as Clash proxy-provider
      * @param {'clash'|'singbox'|'unknown'} format - Detected subscription format
-     * @returns {boolean} - True if format is Clash YAML
+     * @returns {boolean} - True if format is Clash YAML and enableProviders is true
      */
     isCompatibleProviderFormat(format) {
-        return format === 'clash';
+        return this.enableProviders && format === 'clash';
     }
 
     /**

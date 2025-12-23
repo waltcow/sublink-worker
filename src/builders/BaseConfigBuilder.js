@@ -4,7 +4,7 @@ import { createTranslator } from '../i18n/index.js';
 import { generateRules, getOutbounds, PREDEFINED_RULE_SETS } from '../config/index.js';
 
 export class BaseConfigBuilder {
-    constructor(inputString, baseConfig, lang, userAgent, groupByCountry = false, keywordGroups = []) {
+    constructor(inputString, baseConfig, lang, userAgent, groupByCountry = false, keywordGroups = [], defaultExclude = [], kv = null, subscriptionCacheTtl = 300, subscriptionTimeout = 10000, subscriptionMaxRetries = 3) {
         this.inputString = inputString;
         this.config = deepCopy(baseConfig);
         this.customRules = [];
@@ -16,6 +16,126 @@ export class BaseConfigBuilder {
         this.keywordGroups = keywordGroups || [];  // Keyword group definitions
         this.filteredProxyNames = new Set();  // Names of proxies filtered by keyword groups
         this.providerUrls = [];  // URLs to use as providers (auto-sync)
+        this.defaultExclude = defaultExclude || [];  // Global default exclude keywords
+        this.kv = kv;  // KV store for caching subscriptions
+        this.subscriptionCacheTtl = subscriptionCacheTtl;  // Cache TTL in seconds
+        this.subscriptionTimeout = subscriptionTimeout;  // Request timeout in milliseconds
+        this.subscriptionMaxRetries = subscriptionMaxRetries;  // Maximum retries
+    }
+
+    /**
+     * Parse URL hash for subscription configuration
+     * Format: #prefix&exclude=keyword1,keyword2
+     * @param {string} url - Full URL with hash
+     * @returns {{prefix: string, exclude: string[]}} - Parsed configuration
+     */
+    parseUrlHash(url) {
+        const config = { prefix: '', exclude: [] };
+
+        try {
+            const urlObj = new URL(url);
+            const hash = urlObj.hash;
+
+            if (!hash || hash.length <= 1) {
+                // No hash config, use default exclude only
+                config.exclude = [...this.defaultExclude];
+                return config;
+            }
+
+            // Remove the leading '#'
+            const hashContent = hash.substring(1);
+
+            // Split by '&' to get parts
+            const parts = hashContent.split('&');
+
+            // First part is the prefix
+            if (parts[0]) {
+                config.prefix = decodeURIComponent(parts[0].trim());
+            }
+
+            // Parse other parameters
+            let hasExclude = false;
+            for (let i = 1; i < parts.length; i++) {
+                const part = parts[i];
+                if (part.startsWith('exclude=')) {
+                    hasExclude = true;
+                    const excludeValue = part.substring('exclude='.length);
+                    if (excludeValue) {
+                        const urlExclude = decodeURIComponent(excludeValue)
+                            .split(',')
+                            .map(k => k.trim())
+                            .filter(k => k.length > 0);
+                        config.exclude.push(...urlExclude);
+                    }
+                }
+            }
+
+            // Always merge with default exclude (global filter)
+            config.exclude.push(...this.defaultExclude);
+
+            // Remove duplicates
+            config.exclude = [...new Set(config.exclude)];
+        } catch (e) {
+            console.warn('Failed to parse URL hash:', e);
+            // On error, still use default exclude
+            config.exclude = [...this.defaultExclude];
+        }
+
+        return config;
+    }
+
+    /**
+     * Apply prefix to proxy name
+     * @param {string} name - Original proxy name
+     * @param {string} prefix - Prefix to add
+     * @returns {string} - Prefixed name
+     */
+    applyProxyPrefix(name, prefix) {
+        if (!prefix || !name) {
+            return name;
+        }
+        return `${prefix}-${name}`;
+    }
+
+    /**
+     * Check if proxy should be excluded based on exclude keywords
+     * @param {string} name - Proxy name
+     * @param {string[]} excludeKeywords - List of keywords to exclude
+     * @returns {boolean} - True if should be excluded
+     */
+    shouldExcludeProxy(name, excludeKeywords) {
+        if (!excludeKeywords || excludeKeywords.length === 0 || !name) {
+            return false;
+        }
+
+        const lowerName = name.toLowerCase();
+        return excludeKeywords.some(keyword =>
+            lowerName.includes(keyword.toLowerCase())
+        );
+    }
+
+    /**
+     * Get proxy name from proxy object (supports both 'tag' and 'name' fields)
+     * @param {object} proxy - Proxy object
+     * @returns {string|null} - Proxy name or null
+     */
+    getProxyIdentifier(proxy) {
+        return proxy?.tag || proxy?.name || null;
+    }
+
+    /**
+     * Set proxy name on proxy object (supports both 'tag' and 'name' fields)
+     * @param {object} proxy - Proxy object
+     * @param {string} name - New name to set
+     */
+    setProxyIdentifier(proxy, name) {
+        if (!proxy) return;
+        if (proxy.tag !== undefined) {
+            proxy.tag = name;
+        }
+        if (proxy.name !== undefined) {
+            proxy.name = name;
+        }
     }
 
     async build() {
@@ -89,8 +209,16 @@ export class BaseConfigBuilder {
                 if (trimmedUrl.startsWith('http://') || trimmedUrl.startsWith('https://')) {
                     const { fetchSubscriptionWithFormat } = await import('../parsers/subscription/httpSubscriptionFetcher.js');
 
+                    // Parse URL hash for subscription configuration (prefix, exclude)
+                    const hashConfig = this.parseUrlHash(trimmedUrl);
+
                     try {
-                        const fetchResult = await fetchSubscriptionWithFormat(trimmedUrl, this.userAgent);
+                        const fetchResult = await fetchSubscriptionWithFormat(trimmedUrl, this.userAgent, {
+                            kv: this.kv,
+                            cacheTtl: this.subscriptionCacheTtl,
+                            timeout: this.subscriptionTimeout,
+                            maxRetries: this.subscriptionMaxRetries
+                        });
                         if (fetchResult) {
                             const { content, format, url: originalUrl } = fetchResult;
 
@@ -108,7 +236,19 @@ export class BaseConfigBuilder {
                                 }
                                 if (Array.isArray(result.proxies)) {
                                     result.proxies.forEach(proxy => {
-                                        if (proxy && typeof proxy === 'object' && proxy.tag) {
+                                        if (proxy && typeof proxy === 'object') {
+                                            const proxyName = this.getProxyIdentifier(proxy);
+                                            if (!proxyName) return;
+
+                                            // Apply exclude filter
+                                            if (this.shouldExcludeProxy(proxyName, hashConfig.exclude)) {
+                                                return; // Skip this proxy
+                                            }
+                                            // Apply prefix to proxy name
+                                            if (hashConfig.prefix) {
+                                                const newName = this.applyProxyPrefix(proxyName, hashConfig.prefix);
+                                                this.setProxyIdentifier(proxy, newName);
+                                            }
                                             parsedItems.push(proxy);
                                         }
                                     });
@@ -118,11 +258,35 @@ export class BaseConfigBuilder {
                             // Handle array of URIs or other formats
                             if (Array.isArray(result)) {
                                 for (const item of result) {
-                                    if (item && typeof item === 'object' && item.tag) {
+                                    if (item && typeof item === 'object') {
+                                        const itemName = this.getProxyIdentifier(item);
+                                        if (!itemName) continue;
+
+                                        // Apply exclude filter
+                                        if (this.shouldExcludeProxy(itemName, hashConfig.exclude)) {
+                                            continue; // Skip this proxy
+                                        }
+                                        // Apply prefix to proxy name
+                                        if (hashConfig.prefix) {
+                                            const newName = this.applyProxyPrefix(itemName, hashConfig.prefix);
+                                            this.setProxyIdentifier(item, newName);
+                                        }
                                         parsedItems.push(item);
                                     } else if (typeof item === 'string') {
                                         const subResult = await ProxyParser.parse(item, this.userAgent);
                                         if (subResult) {
+                                            const subName = this.getProxyIdentifier(subResult);
+                                            if (!subName) continue;
+
+                                            // Apply exclude filter
+                                            if (this.shouldExcludeProxy(subName, hashConfig.exclude)) {
+                                                continue; // Skip this proxy
+                                            }
+                                            // Apply prefix to proxy name
+                                            if (hashConfig.prefix) {
+                                                const newName = this.applyProxyPrefix(subName, hashConfig.prefix);
+                                                this.setProxyIdentifier(subResult, newName);
+                                            }
                                             parsedItems.push(subResult);
                                         }
                                     }

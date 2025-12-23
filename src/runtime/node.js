@@ -3,6 +3,7 @@ import { createFileAssetFetcher } from '../adapters/assets/fileAssetFetcher.js';
 import { UpstashKVAdapter } from '../adapters/kv/upstashKv.js';
 import { MemoryKVAdapter } from '../adapters/kv/memoryKv.js';
 import { RedisKVAdapter } from '../adapters/kv/redisKv.js';
+import { parseDefaultExclude } from './runtimeConfig.js';
 
 export function createNodeRuntime(env = process.env) {
     return {
@@ -11,7 +12,9 @@ export function createNodeRuntime(env = process.env) {
         logger: console,
         config: {
             configTtlSeconds: parseNumber(env.CONFIG_TTL_SECONDS) || undefined,
-            shortLinkTtlSeconds: parseNumber(env.SHORT_LINK_TTL_SECONDS) || null
+            shortLinkTtlSeconds: parseNumber(env.SHORT_LINK_TTL_SECONDS) || null,
+            defaultExclude: parseDefaultExclude(env.DEFAULT_EXCLUDE),
+            subscriptionCacheTtl: parseNumber(env.SUBSCRIPTION_CACHE_TTL) ?? undefined
         }
     };
 }

@@ -160,9 +160,9 @@ function updateTag(line, name) {
 }
 
 export class QuanxConfigBuilder extends BaseConfigBuilder {
-	constructor(inputString, selectedRules, customRules, baseConfig, lang, userAgent) {
+	constructor(inputString, selectedRules, customRules, baseConfig, lang, userAgent, defaultExclude = [], kv = null, subscriptionCacheTtl = 300, subscriptionTimeout = 10000, subscriptionMaxRetries = 3) {
 		const resolvedBaseConfig = baseConfig ?? QUANX_CONFIG;
-		super(inputString, resolvedBaseConfig, lang, userAgent, false, []);
+		super(inputString, resolvedBaseConfig, lang, userAgent, false, [], defaultExclude, kv, subscriptionCacheTtl, subscriptionTimeout, subscriptionMaxRetries);
 		this.selectedRules = selectedRules;
 		this.customRules = customRules;
 	}

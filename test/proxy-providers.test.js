@@ -46,7 +46,7 @@ describe('Auto Proxy Providers Detection', () => {
     });
 
     describe('Clash Builder', () => {
-        it('should use Clash URL as proxy-provider when format is Clash YAML', async () => {
+        it('should use Clash URL as proxy-provider when format is Clash YAML and enableProviders is true', async () => {
             // Mock fetchSubscriptionWithFormat to return Clash format
             fetchSubscriptionWithFormat.mockResolvedValue({
                 content: mockClashYaml,
@@ -60,7 +60,13 @@ describe('Auto Proxy Providers Detection', () => {
                 [], // customRules
                 null, // baseConfig
                 'zh-CN', // lang
-                'test-agent' // userAgent
+                'test-agent', // userAgent
+                false, // groupByCountry
+                false, // enableClashUI
+                null, // externalController
+                null, // externalUiDownloadUrl
+                [], // keywordGroups
+                true // enableProviders - explicitly enable
             );
             const yamlText = await builder.build();
             const config = yaml.load(yamlText);
@@ -75,6 +81,35 @@ describe('Auto Proxy Providers Detection', () => {
             // proxy-groups should have 'use' field
             const nodeSelect = config['proxy-groups'].find(g => g.name === '🚀 节点选择');
             expect(nodeSelect.use).toContain('provider1');
+        });
+
+        it('should parse Clash URL and list all proxies by default (enableProviders=false)', async () => {
+            // Mock fetchSubscriptionWithFormat to return Clash format
+            fetchSubscriptionWithFormat.mockResolvedValue({
+                content: mockClashYaml,
+                format: 'clash',
+                url: 'https://example.com/clash-sub'
+            });
+
+            const builder = new ClashConfigBuilder(
+                'https://example.com/clash-sub',
+                [],
+                [],
+                null,
+                'zh-CN',
+                'test-agent'
+                // enableProviders defaults to false
+            );
+            const yamlText = await builder.build();
+            const config = yaml.load(yamlText);
+
+            // Should NOT have proxy-providers (default behavior)
+            const hasProviders = config['proxy-providers'] && Object.keys(config['proxy-providers']).length > 0;
+            expect(hasProviders).toBeFalsy();
+
+            // Should have parsed proxies listed in config
+            expect(config.proxies).toBeDefined();
+            expect(config.proxies.length).toBeGreaterThan(0);
         });
 
         it('should parse and convert Sing-Box URL (incompatible format)', async () => {
@@ -107,7 +142,7 @@ describe('Auto Proxy Providers Detection', () => {
     });
 
     describe('Sing-Box Builder', () => {
-        it('should use Sing-Box URL as outbound_provider when format is Sing-Box JSON', async () => {
+        it('should use Sing-Box URL as outbound_provider when format is Sing-Box JSON and enableProviders is true', async () => {
             // Mock fetchSubscriptionWithFormat to return Sing-Box format
             fetchSubscriptionWithFormat.mockResolvedValue({
                 content: mockSingboxJson,
@@ -121,7 +156,14 @@ describe('Auto Proxy Providers Detection', () => {
                 [],
                 null,
                 'zh-CN',
-                'test-agent'
+                'test-agent',
+                false, // groupByCountry
+                false, // enableClashUI
+                null, // externalController
+                null, // externalUiDownloadUrl
+                '1.12', // singboxVersion
+                [], // keywordGroups
+                true // enableProviders - explicitly enable
             );
             await builder.build();
             const config = builder.config;
@@ -135,6 +177,34 @@ describe('Auto Proxy Providers Detection', () => {
             // outbounds should have 'providers' field
             const nodeSelect = config.outbounds.find(o => o.tag === '🚀 节点选择');
             expect(nodeSelect.providers).toContain('provider1');
+        });
+
+        it('should parse Sing-Box URL and list all outbounds by default (enableProviders=false)', async () => {
+            // Mock fetchSubscriptionWithFormat to return Sing-Box format
+            fetchSubscriptionWithFormat.mockResolvedValue({
+                content: mockSingboxJson,
+                format: 'singbox',
+                url: 'https://example.com/singbox-sub'
+            });
+
+            const builder = new SingboxConfigBuilder(
+                'https://example.com/singbox-sub',
+                [],
+                [],
+                null,
+                'zh-CN',
+                'test-agent'
+                // enableProviders defaults to false
+            );
+            await builder.build();
+            const config = builder.config;
+
+            // Should NOT have outbound_providers (default behavior)
+            expect(config.outbound_providers).toBeUndefined();
+
+            // Should have parsed outbounds
+            const proxyOutbounds = config.outbounds.filter(o => o.server);
+            expect(proxyOutbounds.length).toBeGreaterThan(0);
         });
 
         it('should parse and convert Clash URL (incompatible format)', async () => {
@@ -216,7 +286,13 @@ describe('Auto Proxy Providers Detection', () => {
                 [],
                 null,
                 'zh-CN',
-                'test-agent'
+                'test-agent',
+                false, // groupByCountry
+                false, // enableClashUI
+                null,  // externalController
+                null,  // externalUiDownloadUrl
+                [],    // keywordGroups
+                true   // enableProviders - must enable to use providers
             );
             const yamlText = await builder.build();
             const config = yaml.load(yamlText);

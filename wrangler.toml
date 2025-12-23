@@ -10,3 +10,17 @@ kv_namespaces = [
 
 [assets]
 directory = "./public"
+
+# Environment Variables
+# Default exclude keywords for node filtering (applied to all subscriptions)
+# Supports comma-separated string or JSON array format
+# Examples:
+#   DEFAULT_EXCLUDE = "测试,过期,试用"
+#   DEFAULT_EXCLUDE = '["测试","过期","试用"]'
+#
+# Subscription cache TTL in seconds (default: 300 = 5 minutes)
+# Set to 0 to disable caching
+# SUBSCRIPTION_CACHE_TTL = 300
+[vars]
+# DEFAULT_EXCLUDE = "测试,过期,试用"
+# SUBSCRIPTION_CACHE_TTL = "300"

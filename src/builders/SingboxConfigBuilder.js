@@ -6,9 +6,9 @@ import { addProxyWithDedup } from './helpers/proxyHelpers.js';
 import { buildSelectorMembers as buildSelectorMemberList, buildNodeSelectMembers, uniqueNames } from './helpers/groupBuilder.js';
 
 export class SingboxConfigBuilder extends BaseConfigBuilder {
-    constructor(inputString, selectedRules, customRules, baseConfig, lang, userAgent, groupByCountry = false, enableClashUI = false, externalController, externalUiDownloadUrl, singboxVersion = '1.12', keywordGroups = []) {
+    constructor(inputString, selectedRules, customRules, baseConfig, lang, userAgent, groupByCountry = false, enableClashUI = false, externalController, externalUiDownloadUrl, singboxVersion = '1.12', keywordGroups = [], enableProviders = false, defaultExclude = [], kv = null, subscriptionCacheTtl = 300, subscriptionTimeout = 10000, subscriptionMaxRetries = 3) {
         const resolvedBaseConfig = baseConfig ?? SING_BOX_CONFIG;
-        super(inputString, resolvedBaseConfig, lang, userAgent, groupByCountry, keywordGroups);
+        super(inputString, resolvedBaseConfig, lang, userAgent, groupByCountry, keywordGroups, defaultExclude, kv, subscriptionCacheTtl, subscriptionTimeout, subscriptionMaxRetries);
 
         this.selectedRules = selectedRules;
         this.customRules = customRules;
@@ -18,6 +18,7 @@ export class SingboxConfigBuilder extends BaseConfigBuilder {
         this.externalController = externalController;
         this.externalUiDownloadUrl = externalUiDownloadUrl;
         this.singboxVersion = singboxVersion;  // '1.11' or '1.12'
+        this.enableProviders = enableProviders;
 
         if (this.config?.dns?.servers?.length > 0) {
             this.config.dns.servers[0].detour = this.t('outboundNames.Node Select');
@@ -28,14 +29,14 @@ export class SingboxConfigBuilder extends BaseConfigBuilder {
      * Check if subscription format is compatible for use as Sing-Box outbound_provider
      * Only available in Sing-Box 1.12+
      * @param {'clash'|'singbox'|'unknown'} format - Detected subscription format
-     * @returns {boolean} - True if format is Sing-Box JSON and version supports providers
+     * @returns {boolean} - True if format is Sing-Box JSON, version supports providers, and enableProviders is true
      */
     isCompatibleProviderFormat(format) {
         // outbound_providers only supported in Sing-Box 1.12+
         if (this.singboxVersion === '1.11') {
             return false;
         }
-        return format === 'singbox';
+        return this.enableProviders && format === 'singbox';
     }
 
     /**
