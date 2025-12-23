@@ -101,7 +101,7 @@ export const CustomRules = (props) => {
                         <option value="DIRECT"></option>
                         <option value="REJECT"></option>
                         <template {...{'x-for': 'group in keywordGroups', 'x-bind:key': 'group.name'}}>
-                            <option {...{'x-bind:value': 'group.name'}}></option>
+                            <option {...{'x-bind:value': "(group.emoji || '🏢') + ' ' + group.name"}}></option>
                         </template>
                     </datalist>
                 </div>
