@@ -60,6 +60,8 @@ const OUTBOUND_POLICY_ALIAS = {
 	'Bilibili': 'China Media',
 	'Youtube': 'YouTube',
 	'Apple': 'Apple',
+	'Google': 'Google',
+	'Github': 'Github',
 	'Microsoft': 'Microsoft',
 	'Telegram': 'Telegram',
 	'Crypto': 'Crypto',
@@ -319,6 +321,16 @@ export class QuanxConfigBuilder extends BaseConfigBuilder {
 			return ['Outside', 'direct'];
 		}
 
+		// Google: Outside, 地区...
+		if (policyName === 'Google') {
+			return ['Outside', ...orderedRegions, 'direct'];
+		}
+
+		// Github: Outside, 地区...
+		if (policyName === 'Github') {
+			return ['Outside', ...orderedRegions, 'direct'];
+		}
+
 		// Microsoft: direct, Outside
 		if (policyName === 'Microsoft') {
 			return ['direct', 'Outside'];
@@ -370,7 +382,7 @@ export class QuanxConfigBuilder extends BaseConfigBuilder {
 
 		// 按固定顺序添加策略组
 		const policyOrder = [
-			'AdBlock', 'Outside', 'Mainland', 'Apple', 'AI Suite',
+			'AdBlock', 'Outside', 'Mainland', 'Apple', 'Google', 'Github', 'AI Suite',
 			'China Media', 'Asian Media', 'Global Media',
 			'Netflix', 'Disney+', 'YouTube', 'Max', 'Spotify',
 			'Telegram', 'Crypto', 'Discord', 'Microsoft', 'PayPal', 'Speedtest',

@@ -23,6 +23,8 @@ export const QUANX_CONFIG = {
 		'static=Outside,img-url=https://testingcf.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/Global.png',
 		'static=Mainland,img-url=https://testingcf.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/Domestic.png',
 		'static=Apple,img-url=https://testingcf.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/Apple.png',
+		'static=Google,img-url=https://testingcf.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/Google.png',
+		'static=Github,img-url=https://testingcf.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/GitHub.png',
 		'static=AI Suite,img-url=https://testingcf.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/AI.png',
 		'static=China Media,img-url=https://testingcf.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/DomesticMedia.png',
 		'static=Asian Media,img-url=https://testingcf.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/HKMTMedia.png',
