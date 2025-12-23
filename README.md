@@ -13,7 +13,7 @@
   <br>
 
 <p>
-  <a href="https://deploy.workers.cloudflare.com/?url=https://github.com/7Sageer/sublink-worker">
+  <a href="https://deploy.workers.cloudflare.com/?url=https://github.com/waltcow/sublink-worker">
     <img src="https://deploy.workers.cloudflare.com/button" alt="Deploy to Cloudflare Workers" style="height: 32px;"/>
   </a>
 </p>
@@ -39,7 +39,7 @@
 
 ### Alternative Runtimes
 - **Node.js**: `npm run build:node && node dist/node-server.cjs`
-- **Docker**: `docker pull ghcr.io/7sageer/sublink-worker:latest`
+- **Docker**: `docker pull ghcr.io/waltcow/sublink-worker:latest`
 - **Docker Compose**: `docker compose up -d` (includes Redis)
 
 ## ✨ Features
@@ -48,7 +48,7 @@
 ShadowSocks • VMess • VLESS • Hysteria2 • Trojan • TUIC
 
 ### Client Support
-Sing-Box • Clash • Xray/V2Ray • Surge
+Sing-Box • Clash • Xray/V2Ray • Surge • QuantumultX
 
 ### Input Support
 - Base64 subscriptions
@@ -60,7 +60,7 @@ Sing-Box • Clash • Xray/V2Ray • Surge
 - Generate fixed/random short links (KV-based)
 - Light/Dark theme toggle
 - Flexible API for script automation
-- Multi-language support (Chinese, English, Persian, Russian)
+- Multi-language support (Chinese, English)
 - Web interface with predefined rule sets and customizable policy groups
 
 ## 🤝 Contributing
@@ -93,17 +93,17 @@ This project is for learning and exchange purposes only. Please do not use it fo
     </td>
   </tr>
 </table>
-  <p>If you would like to sponsor this project, please contact the developer <a href="https://github.com/7Sageer" style="text-decoration: none;">@7Sageer</a></p>
+  <p>Original project by <a href="https://github.com/7Sageer" style="text-decoration: none;">@7Sageer</a> • This fork maintained by <a href="https://github.com/waltcow" style="text-decoration: none;">@waltcow</a></p>
 </div>
 
 ## ⭐ Star History
 
 Thanks to everyone who has starred this project! 🌟
 
-<a href="https://star-history.com/#7Sageer/sublink-worker&Date">
+<a href="https://star-history.com/#waltcow/sublink-worker&Date">
  <picture>
-   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=7Sageer/sublink-worker&type=Date&theme=dark" />
-   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/svg?repos=7Sageer/sublink-worker&type=Date" />
-   <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=7Sageer/sublink-worker&type=Date" />
+   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=waltcow/sublink-worker&type=Date&theme=dark" />
+   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/svg?repos=waltcow/sublink-worker&type=Date" />
+   <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=waltcow/sublink-worker&type=Date" />
  </picture>
 </a>
