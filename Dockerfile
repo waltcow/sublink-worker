@@ -1,12 +1,17 @@
 FROM node:20-alpine AS builder
 WORKDIR /app
 
+ARG GIT_HASH=unknown
+
 COPY package*.json ./
 COPY pnpm-lock.yaml pnpm-lock.yaml
 RUN npm install
 
 COPY src ./src
 COPY public ./public
+
+# Append git hash to APP_VERSION in constants.js
+RUN sed -i "s/export const APP_VERSION = '\([^']*\)';/export const APP_VERSION = '\1-${GIT_HASH}';/" src/constants.js
 
 RUN npm run build:node
 
