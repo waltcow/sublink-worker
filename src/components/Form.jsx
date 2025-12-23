@@ -25,6 +25,11 @@ export const Form = (props) => {
     savingConfig: t('savingConfig'),
     configContentRequired: t('configContentRequired'),
     configSaveFailed: t('configSaveFailed'),
+    exportConfig: t('exportConfig'),
+    importConfig: t('importConfig'),
+    importConfigConfirm: t('importConfigConfirm'),
+    importConfigSuccess: t('importConfigSuccess'),
+    invalidConfigFormat: t('invalidConfigFormat'),
     confirmClearConfig: t('confirmClearConfig'),
     confirmClearAll: t('confirmClearAll'),
     errorGeneratingLinks: t('errorGeneratingLinks'),
@@ -232,13 +237,33 @@ export const Form = (props) => {
                           placeholder={t('groupNamePlaceholder')}
                           class="flex-1 px-2 py-1.5 text-sm bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded focus:ring-1 focus:ring-primary-500 focus:border-transparent"
                         />
-                        <input
-                          type="text"
-                          {...{'x-model': 'keywordGroups[groupIndex].emoji'}}
-                          placeholder="🏢"
-                          maxlength="2"
-                          class="w-12 px-2 py-1.5 text-sm text-center bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded focus:ring-1 focus:ring-primary-500 focus:border-transparent"
-                        />
+                        <div class="relative">
+                          <button
+                            type="button"
+                            {...{'x-on:click': 'toggleEmojiPicker(groupIndex)'}}
+                            class="w-10 h-[38px] flex items-center justify-center bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                          >
+                            <span {...{'x-text': "keywordGroups[groupIndex].emoji || '🏢'"}}></span>
+                          </button>
+                          
+                          <div 
+                            x-show="showEmojiPicker === groupIndex"
+                            {...{'x-on:click.away': 'showEmojiPicker = null'}}
+                            class="absolute z-50 mt-1 p-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl w-64"
+                            style="left: 0;"
+                          >
+                            <div class="grid grid-cols-8 gap-1 max-h-48 overflow-y-auto p-1">
+                              <template {...{'x-for': 'emoji in commonEmojis', 'x-bind:key': 'emoji'}}>
+                                <button
+                                  type="button"
+                                  {...{'x-on:click': 'selectEmoji(groupIndex, emoji)'}}
+                                  class="w-7 h-7 flex items-center justify-center hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors text-sm"
+                                  {...{'x-text': 'emoji'}}
+                                ></button>
+                              </template>
+                            </div>
+                          </div>
+                        </div>
                         <select
                           {...{'x-model': 'keywordGroups[groupIndex].type'}}
                           class="px-2 py-1.5 text-sm bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded focus:ring-1 focus:ring-primary-500 focus:border-transparent"
@@ -414,6 +439,33 @@ class="px-6 py-3.5 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 bo
   <i class="fas fa-trash-alt"></i>
 { t('clear') }
           </button>
+        </div>
+
+        {/* Config Management Buttons */}
+        <div class="flex flex-col sm:flex-row gap-4 mt-4">
+          <button
+            type="button"
+            x-on:click="exportConfig()"
+            class="flex-1 py-2 px-4 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-all duration-200 flex items-center justify-center gap-2 font-medium"
+          >
+            <i class="fas fa-download"></i>
+            <span>{t('exportConfig')}</span>
+          </button>
+          <button
+            type="button"
+            x-on:click="$refs.fileInput.click()"
+            class="flex-1 py-2 px-4 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-all duration-200 flex items-center justify-center gap-2 font-medium"
+          >
+            <i class="fas fa-upload"></i>
+            <span>{t('importConfig')}</span>
+          </button>
+          <input
+            type="file"
+            x-ref="fileInput"
+            class="hidden"
+            accept=".json"
+            x-on:change="importConfig($event)"
+          />
         </div>
       </form>
 

@@ -38,6 +38,16 @@ export const formLogicFn = (t) => {
             customShortCode: '',
             parsingUrl: false,
             parseDebounceTimer: null,
+            // Emoji picker state
+            showEmojiPicker: null, // Index of group showing picker
+            commonEmojis: [
+                '🏢', '🎮', '📺', '🤖', '☁️', '🌐', '🚀', '🔓', '🔒', '🛡️', 
+                '⚙️', '📍', '🗺️', '🚩', '🏁', '📶', '📡', '🔋', '🔌', '💻', 
+                '📱', '🛠️', '⚖️', '🛸', '🌍', '🌎', '🌏', '🌑', '🌕', '🌓', 
+                '🌗', '🎬', '🎧', '🎤', '🎨', '🎭', '🎫', '🎬', '🎬', '🎭',
+                '🇺🇸', '🇭🇰', '🇯🇵', '🇸🇬', '🇰🇷', '🇬🇧', '🇩🇪', '🇫🇷', '🇷🇺', '🇨🇳',
+                '🇹🇼', '🇨🇦', '🇦🇺', '🇳🇱', '🇮🇳', '🇧🇷', '🇲🇽', '🇮🇹', '🇪🇸', '🇹🇷'
+            ],
             // These will be populated from window.APP_TRANSLATIONS
             processingText: '',
             convertText: '',
@@ -70,6 +80,33 @@ export const formLogicFn = (t) => {
                 this.configEditor = localStorage.getItem('configEditor') || '';
                 this.configType = localStorage.getItem('configType') || 'singbox';
                 this.customShortCode = localStorage.getItem('customShortCode') || '';
+                this.selectedPredefinedRule = localStorage.getItem('selectedPredefinedRule') || 'balanced';
+                const savedSelectedRules = localStorage.getItem('selectedRules');
+                if (savedSelectedRules) {
+                    try {
+                        this.selectedRules = JSON.parse(savedSelectedRules);
+                    } catch (e) {
+                        this.selectedRules = [];
+                    }
+                }
+
+                // Load custom rules
+                const savedCustomRules = localStorage.getItem('customRules');
+                if (savedCustomRules) {
+                    try {
+                        const parsed = JSON.parse(savedCustomRules);
+                        if (Array.isArray(parsed) && parsed.length > 0) {
+                            setTimeout(() => {
+                                window.dispatchEvent(new CustomEvent('restore-custom-rules', {
+                                    detail: { rules: parsed }
+                                }));
+                            }, 100);
+                        }
+                    } catch (e) {
+                        console.warn('Failed to parse saved customRules:', e);
+                    }
+                }
+
                 const initialUrlParams = new URLSearchParams(window.location.search);
                 this.currentConfigId = initialUrlParams.get('configId') || '';
 
@@ -115,6 +152,8 @@ export const formLogicFn = (t) => {
                     localStorage.setItem('configType', val);
                     this.resetConfigValidation();
                 });
+                this.$watch('selectedRules', val => localStorage.setItem('selectedRules', JSON.stringify(val)));
+                this.$watch('selectedPredefinedRule', val => localStorage.setItem('selectedPredefinedRule', val));
                 this.$watch('customShortCode', val => localStorage.setItem('customShortCode', val));
                 this.$watch('accordionSections', val => localStorage.setItem('accordionSections', JSON.stringify(val)), { deep: true });
                 this.$watch('keywordGroups', val => localStorage.setItem('keywordGroups', JSON.stringify(val)), { deep: true });
@@ -239,11 +278,34 @@ export const formLogicFn = (t) => {
             clearAll() {
                 if (confirm(window.APP_TRANSLATIONS.confirmClearAll)) {
                     this.input = '';
+                    this.selectedRules = [];
+                    this.selectedPredefinedRule = 'balanced';
+                    this.applyPredefinedRule();
+                    this.groupByCountry = false;
+                    this.enableClashUI = false;
+                    this.externalController = '';
+                    this.externalUiDownloadUrl = '';
+                    this.customUA = '';
+                    this.keywordGroups = [];
                     this.generatedLinks = null;
                     this.shortenedLinks = null;
                     this.customShortCode = '';
-                    // Also clear from localStorage
-                    localStorage.removeItem('customShortCode');
+                    this.configEditor = '';
+                    
+                    // Clear all related localStorage items
+                    const keysToRemove = [
+                        'inputTextarea', 'advancedToggle', 'groupByCountry', 
+                        'enableClashUI', 'externalController', 'externalUiDownloadUrl',
+                        'userAgent', 'configEditor', 'configType', 'customShortCode',
+                        'accordionSections', 'keywordGroups', 'selectedRules', 
+                        'selectedPredefinedRule', 'customRules'
+                    ];
+                    keysToRemove.forEach(key => localStorage.removeItem(key));
+
+                    // Clear custom rules component
+                    window.dispatchEvent(new CustomEvent('restore-custom-rules', {
+                        detail: { rules: [] }
+                    }));
                 }
             },
 
@@ -275,6 +337,107 @@ export const formLogicFn = (t) => {
 
             removeKeyword(groupIndex, keywordIndex) {
                 this.keywordGroups[groupIndex].keywords.splice(keywordIndex, 1);
+            },
+
+            toggleEmojiPicker(index) {
+                if (this.showEmojiPicker === index) {
+                    this.showEmojiPicker = null;
+                } else {
+                    this.showEmojiPicker = index;
+                }
+            },
+
+            selectEmoji(groupIndex, emoji) {
+                this.keywordGroups[groupIndex].emoji = emoji;
+                this.showEmojiPicker = null;
+            },
+
+            exportConfig() {
+                const customRulesInput = document.querySelector('input[name="customRules"]');
+                const customRules = customRulesInput && customRulesInput.value ? JSON.parse(customRulesInput.value) : [];
+
+                const config = {
+                    version: 1,
+                    timestamp: new Date().toISOString(),
+                    settings: {
+                        input: this.input,
+                        selectedRules: this.selectedRules,
+                        selectedPredefinedRule: this.selectedPredefinedRule,
+                        customRules: customRules,
+                        groupByCountry: this.groupByCountry,
+                        enableClashUI: this.enableClashUI,
+                        externalController: this.externalController,
+                        externalUiDownloadUrl: this.externalUiDownloadUrl,
+                        configType: this.configType,
+                        configEditor: this.configEditor,
+                        customUA: this.customUA,
+                        keywordGroups: this.keywordGroups,
+                        customShortCode: this.customShortCode,
+                        accordionSections: this.accordionSections
+                    }
+                };
+
+                const blob = new Blob([JSON.stringify(config, null, 2)], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `sublink-config-${new Date().toISOString().split('T')[0]}.json`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            },
+
+            async importConfig(event) {
+                const file = event.target.files[0];
+                if (!file) return;
+
+                if (!confirm(window.APP_TRANSLATIONS.importConfigConfirm)) {
+                    event.target.value = '';
+                    return;
+                }
+
+                const reader = new FileReader();
+                reader.onload = async (e) => {
+                    try {
+                        const config = JSON.parse(e.target.result);
+                        if (!config.settings) {
+                            throw new Error('Invalid config format');
+                        }
+
+                        const settings = config.settings;
+
+                        // Update component state (watchers will update localStorage)
+                        if (settings.input !== undefined) this.input = settings.input;
+                        if (settings.selectedRules !== undefined) this.selectedRules = settings.selectedRules;
+                        if (settings.selectedPredefinedRule !== undefined) this.selectedPredefinedRule = settings.selectedPredefinedRule;
+                        if (settings.groupByCountry !== undefined) this.groupByCountry = settings.groupByCountry;
+                        if (settings.enableClashUI !== undefined) this.enableClashUI = settings.enableClashUI;
+                        if (settings.externalController !== undefined) this.externalController = settings.externalController;
+                        if (settings.externalUiDownloadUrl !== undefined) this.externalUiDownloadUrl = settings.externalUiDownloadUrl;
+                        if (settings.configType !== undefined) this.configType = settings.configType;
+                        if (settings.configEditor !== undefined) this.configEditor = settings.configEditor;
+                        if (settings.customUA !== undefined) this.customUA = settings.customUA;
+                        if (settings.keywordGroups !== undefined) this.keywordGroups = settings.keywordGroups;
+                        if (settings.customShortCode !== undefined) this.customShortCode = settings.customShortCode;
+                        if (settings.accordionSections !== undefined) this.accordionSections = settings.accordionSections;
+
+                        // Special handling for customRules
+                        if (settings.customRules !== undefined && Array.isArray(settings.customRules)) {
+                            window.dispatchEvent(new CustomEvent('restore-custom-rules', {
+                                detail: { rules: settings.customRules }
+                            }));
+                        }
+
+                        alert(window.APP_TRANSLATIONS.importConfigSuccess);
+                    } catch (error) {
+                        console.error('Import failed:', error);
+                        alert(window.APP_TRANSLATIONS.invalidConfigFormat + ': ' + error.message);
+                    } finally {
+                        event.target.value = '';
+                    }
+                };
+                reader.readAsText(file);
             },
 
             updateConfigIdInUrl(configId) {
