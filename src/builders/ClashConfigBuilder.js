@@ -506,6 +506,11 @@ export class ClashConfigBuilder extends BaseConfigBuilder {
             `MATCH,${this.t('outboundNames.Fall Back')}`
         ];
 
+        // Clean up proxy-related fields that should not be in config
+        delete this.config['redir-port'];
+        delete this.config['port'];
+        delete this.config['socks-port'];
+
         // Enable Clash UI (external controller/dashboard) when requested or when custom UI params are provided
         if (this.enableClashUI || this.externalController || this.externalUiDownloadUrl) {
             const defaultController = '0.0.0.0:9090';
@@ -525,6 +530,13 @@ export class ClashConfigBuilder extends BaseConfigBuilder {
             this.config['external-ui-name'] = uiName;
             this.config['external-ui-url'] = uiUrl;
             this.config['secret'] = secret;
+        } else {
+            // Remove UI-related fields when Clash UI is not enabled
+            delete this.config['external-controller'];
+            delete this.config['external-ui'];
+            delete this.config['external-ui-name'];
+            delete this.config['external-ui-url'];
+            delete this.config['secret'];
         }
 
         return yaml.dump(this.config);
