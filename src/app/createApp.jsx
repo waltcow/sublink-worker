@@ -17,6 +17,15 @@ import { ConfigStorageService } from '../services/configStorageService.js';
 import { ServiceError, MissingDependencyError } from '../services/errors.js';
 import { normalizeRuntime } from '../runtime/runtimeConfig.js';
 import { PREDEFINED_RULE_SETS, SING_BOX_CONFIG, SING_BOX_CONFIG_V1_11 } from '../config/index.js';
+import { faviconBytes } from '../assets/favicon.js';
+
+const FAVICON_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="SubLink logo">
+  <rect width="512" height="512" rx="120" fill="#6D28D9"/>
+  <g fill="none" stroke="#FFFFFF" stroke-width="40" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="128" y="164" width="200" height="120" rx="60"/>
+    <rect x="184" y="228" width="200" height="120" rx="60"/>
+  </g>
+</svg>`;
 
 export function createApp(bindings = {}) {
     const runtime = normalizeRuntime(bindings);
@@ -354,26 +363,34 @@ export function createApp(bindings = {}) {
     });
 
     app.get('/favicon.ico', async (c) => {
-        if (!runtime.assetFetcher) {
-            return c.notFound();
+        if (runtime.assetFetcher) {
+            try {
+                return await runtime.assetFetcher(c.req.raw);
+            } catch (error) {
+                runtime.logger.warn('Asset fetch failed', error);
+            }
         }
-        try {
-            return await runtime.assetFetcher(c.req.raw);
-        } catch (error) {
-            runtime.logger.warn('Asset fetch failed', error);
-            return c.notFound();
-        }
+        return new Response(faviconBytes, {
+            headers: {
+                'content-type': 'image/x-icon',
+                'cache-control': 'public, max-age=31536000, immutable'
+            }
+        });
     });
     app.get('/favicon.svg', async (c) => {
-        if (!runtime.assetFetcher) {
-            return c.notFound();
+        if (runtime.assetFetcher) {
+            try {
+                return await runtime.assetFetcher(c.req.raw);
+            } catch (error) {
+                runtime.logger.warn('Asset fetch failed', error);
+            }
         }
-        try {
-            return await runtime.assetFetcher(c.req.raw);
-        } catch (error) {
-            runtime.logger.warn('Asset fetch failed', error);
-            return c.notFound();
-        }
+        return new Response(FAVICON_SVG, {
+            headers: {
+                'content-type': 'image/svg+xml',
+                'cache-control': 'public, max-age=31536000, immutable'
+            }
+        });
     });
 
     return app;
