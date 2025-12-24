@@ -68,13 +68,20 @@ export const formLogicFn = (t) => {
                 this.input = localStorage.getItem('inputTextarea') || '';
                 this.showAdvanced = localStorage.getItem('advancedToggle') === 'true';
 
-                // Event listeners for profile management
-                window.addEventListener('load-profile', (e) => this.loadProfileData(e.detail));
-                window.addEventListener('request-save-profile', () => this.requestSaveProfile());
-
-                // Event listeners for config management
-                window.addEventListener('export-config', () => this.exportConfig());
-                window.addEventListener('import-config', () => this.$refs.fileInput.click());
+                // Register global event listeners once to avoid duplicate handlers.
+                if (!window.__sublinkFormEventHandlers) {
+                    window.__sublinkFormEventHandlers = {
+                        loadProfile: (e) => window.__sublinkFormInstance?.loadProfileData?.(e.detail),
+                        requestSaveProfile: () => window.__sublinkFormInstance?.requestSaveProfile?.(),
+                        exportConfig: () => window.__sublinkFormInstance?.exportConfig?.(),
+                        importConfig: () => window.__sublinkFormInstance?.$refs?.fileInput?.click()
+                    };
+                    window.addEventListener('load-profile', window.__sublinkFormEventHandlers.loadProfile);
+                    window.addEventListener('request-save-profile', window.__sublinkFormEventHandlers.requestSaveProfile);
+                    window.addEventListener('export-config', window.__sublinkFormEventHandlers.exportConfig);
+                    window.addEventListener('import-config', window.__sublinkFormEventHandlers.importConfig);
+                }
+                window.__sublinkFormInstance = this;
 
                 this.groupByCountry = localStorage.getItem('groupByCountry') === 'true';
                 this.enableClashUI = localStorage.getItem('enableClashUI') === 'true';

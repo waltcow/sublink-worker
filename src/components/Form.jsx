@@ -56,6 +56,7 @@ export const Form = (props) => {
   const scriptContent = `
     window.APP_TRANSLATIONS = ${JSON.stringify(translations)};
     window.PREDEFINED_RULE_SETS = ${JSON.stringify(PREDEFINED_RULE_SETS)};
+    window.__name = window.__name || ((target, value) => target);
     (${formLogicFn.toString()})();
   `;
 
