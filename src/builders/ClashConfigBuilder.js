@@ -1,5 +1,5 @@
 import yaml from 'js-yaml';
-import { CLASH_CONFIG, generateRules, generateClashRuleSets, getOutbounds, PREDEFINED_RULE_SETS } from '../config/index.js';
+import { CLASH_CONFIG, generateRules, generateClashRuleSets } from '../config/index.js';
 import { BaseConfigBuilder } from './BaseConfigBuilder.js';
 import { deepCopy, groupProxiesByCountry, groupProxiesByKeyword } from '../utils.js';
 import { addProxyWithDedup } from './helpers/proxyHelpers.js';
@@ -505,11 +505,6 @@ export class ClashConfigBuilder extends BaseConfigBuilder {
             ...ruleResults,
             `MATCH,${this.t('outboundNames.Fall Back')}`
         ];
-
-        // Clean up proxy-related fields that should not be in config
-        delete this.config['redir-port'];
-        delete this.config['port'];
-        delete this.config['socks-port'];
 
         // Enable Clash UI (external controller/dashboard) when requested or when custom UI params are provided
         if (this.enableClashUI || this.externalController || this.externalUiDownloadUrl) {
