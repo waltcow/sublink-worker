@@ -364,6 +364,17 @@ export function createApp(bindings = {}) {
             return c.notFound();
         }
     });
+    app.get('/favicon.svg', async (c) => {
+        if (!runtime.assetFetcher) {
+            return c.notFound();
+        }
+        try {
+            return await runtime.assetFetcher(c.req.raw);
+        } catch (error) {
+            runtime.logger.warn('Asset fetch failed', error);
+            return c.notFound();
+        }
+    });
 
     return app;
 }
