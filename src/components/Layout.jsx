@@ -231,21 +231,7 @@ export const Layout = (props) => {
                 viewRelease: 'View Release',
                 updateGuide: 'Update Guide',
                 later: 'Later'
-              },
-              'fa': {
-                newVersionAvailable: 'نسخه جدید موجود است',
-                currentVersion: 'نسخه فعلی',
-                viewRelease: 'مشاهده نسخه',
-                updateGuide: 'راهنمای به‌روزرسانی',
-                later: 'بعداً'
-              },
-              'ru': {
-                newVersionAvailable: 'Доступна новая версия',
-                currentVersion: 'Текущая',
-                viewRelease: 'Посмотреть',
-                updateGuide: 'Руководство по обновлению',
-                later: 'Позже'
-              }
+              },              
             };
             const langKey = Object.keys(translations).find(k => lang.startsWith(k.split('-')[0])) || 'en-US';
             return translations[langKey][key] || translations['en-US'][key];

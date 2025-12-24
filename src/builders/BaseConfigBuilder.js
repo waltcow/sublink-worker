@@ -25,20 +25,18 @@ export class BaseConfigBuilder {
 
     /**
      * Parse URL hash for subscription configuration
-     * Format: #prefix&exclude=keyword1,keyword2
+     * Format: #prefix
      * @param {string} url - Full URL with hash
      * @returns {{prefix: string, exclude: string[]}} - Parsed configuration
      */
     parseUrlHash(url) {
-        const config = { prefix: '', exclude: [] };
+        const config = { prefix: '', exclude: [...this.defaultExclude] };
 
         try {
             const urlObj = new URL(url);
             const hash = urlObj.hash;
 
             if (!hash || hash.length <= 1) {
-                // No hash config, use default exclude only
-                config.exclude = [...this.defaultExclude];
                 return config;
             }
 
@@ -53,32 +51,8 @@ export class BaseConfigBuilder {
                 config.prefix = decodeURIComponent(parts[0].trim());
             }
 
-            // Parse other parameters
-            let hasExclude = false;
-            for (let i = 1; i < parts.length; i++) {
-                const part = parts[i];
-                if (part.startsWith('exclude=')) {
-                    hasExclude = true;
-                    const excludeValue = part.substring('exclude='.length);
-                    if (excludeValue) {
-                        const urlExclude = decodeURIComponent(excludeValue)
-                            .split(',')
-                            .map(k => k.trim())
-                            .filter(k => k.length > 0);
-                        config.exclude.push(...urlExclude);
-                    }
-                }
-            }
-
-            // Always merge with default exclude (global filter)
-            config.exclude.push(...this.defaultExclude);
-
-            // Remove duplicates
-            config.exclude = [...new Set(config.exclude)];
         } catch (e) {
             console.warn('Failed to parse URL hash:', e);
-            // On error, still use default exclude
-            config.exclude = [...this.defaultExclude];
         }
 
         return config;
@@ -209,7 +183,7 @@ export class BaseConfigBuilder {
                 if (trimmedUrl.startsWith('http://') || trimmedUrl.startsWith('https://')) {
                     const { fetchSubscriptionWithFormat } = await import('../parsers/subscription/httpSubscriptionFetcher.js');
 
-                    // Parse URL hash for subscription configuration (prefix, exclude)
+                    // Parse URL hash for subscription configuration (prefix)
                     const hashConfig = this.parseUrlHash(trimmedUrl);
 
                     try {

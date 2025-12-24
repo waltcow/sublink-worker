@@ -50,7 +50,7 @@ export function createApp(bindings = {}) {
                     <main class="flex-1">
                         <div class="container mx-auto px-4 py-8 pt-24">
                             <div class="max-w-4xl mx-auto">
-                                <div class="text-center mb-12 pt-8">
+                                <div class="text-center mb-3 pt-8">
                                     <h1 class="text-4xl md:text-5xl font-bold text-gray-900 dark:text-white mb-4 tracking-tight">
                                         {APP_NAME}
                                     </h1>
