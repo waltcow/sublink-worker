@@ -142,7 +142,9 @@ export const Form = (props) => {
     <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
       <div class="flex items-center justify-between mb-4">
         <h3 class="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
-          <i class="fas fa-filter text-gray-400"></i>
+          <span class="w-8 h-8 rounded-lg bg-primary-50 dark:bg-primary-900/20 text-primary-600 dark:text-primary-400 flex items-center justify-center">
+            <i class="fas fa-filter text-sm"></i>
+          </span>
           {t('ruleSelection')}
         </h3>
         <select x-model="selectedPredefinedRule" {...{'x-on:change': 'applyPredefinedRule()'}} class="px-3 py-1.5 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700 text-sm font-medium text-gray-700 dark:text-gray-200 focus:ring-2 focus:ring-primary-500 focus:border-transparent">
@@ -176,7 +178,9 @@ export const Form = (props) => {
     {/* General Options */ }
     <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
             <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
-              <i class="fas fa-cog text-gray-400"></i>
+              <span class="w-8 h-8 rounded-lg bg-primary-50 dark:bg-primary-900/20 text-primary-600 dark:text-primary-400 flex items-center justify-center">
+                <i class="fas fa-cog text-sm"></i>
+              </span>
               {t('generalSettings')}
             </h3>
             
@@ -380,7 +384,9 @@ export const Form = (props) => {
   <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
             <div class="flex items-center justify-between mb-4">
               <h3 class="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
-                <i class="fas fa-file-code text-gray-400"></i>
+                <span class="w-8 h-8 rounded-lg bg-primary-50 dark:bg-primary-900/20 text-primary-600 dark:text-primary-400 flex items-center justify-center">
+                  <i class="fas fa-file-code text-sm"></i>
+                </span>
                 {t('baseConfigSettings')}
               </h3>
               <select x-model="configType" class="px-3 py-1.5 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700 text-sm font-medium text-gray-700 dark:text-gray-200 focus:ring-2 focus:ring-primary-500 focus:border-transparent">
