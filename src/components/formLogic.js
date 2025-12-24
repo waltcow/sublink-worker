@@ -10,8 +10,7 @@ export const formLogicFn = (t) => {
                 rules: true,        // 规则选择 - 默认展开
                 customRules: false, // 自定义规则
                 general: false,     // 通用设置
-                baseConfig: false,  // 基础配置
-                ua: false          // User Agent
+                baseConfig: false  // 基础配置
             },
             selectedRules: [],
             selectedPredefinedRule: 'balanced',
@@ -30,7 +29,6 @@ export const formLogicFn = (t) => {
             configSaveFailedText: '',
             configValidationState: '',
             configValidationMessage: '',
-            customUA: '',
             loading: false,
             generatedLinks: null,
             shortenedLinks: null,
@@ -82,7 +80,6 @@ export const formLogicFn = (t) => {
                 this.enableClashUI = localStorage.getItem('enableClashUI') === 'true';
                 this.externalController = localStorage.getItem('externalController') || '';
                 this.externalUiDownloadUrl = localStorage.getItem('externalUiDownloadUrl') || '';
-                this.customUA = localStorage.getItem('userAgent') || '';
                 this.configEditor = localStorage.getItem('configEditor') || '';
                 this.configType = localStorage.getItem('configType') || 'singbox';
                 this.customShortCode = localStorage.getItem('customShortCode') || '';
@@ -149,7 +146,6 @@ export const formLogicFn = (t) => {
                 this.$watch('enableClashUI', val => localStorage.setItem('enableClashUI', val));
                 this.$watch('externalController', val => localStorage.setItem('externalController', val));
                 this.$watch('externalUiDownloadUrl', val => localStorage.setItem('externalUiDownloadUrl', val));
-                this.$watch('customUA', val => localStorage.setItem('userAgent', val));
                 this.$watch('configEditor', val => {
                     localStorage.setItem('configEditor', val);
                     this.resetConfigValidation();
@@ -186,7 +182,6 @@ export const formLogicFn = (t) => {
                         externalUiDownloadUrl: this.externalUiDownloadUrl,
                         configType: this.configType,
                         configEditor: this.configEditor,
-                        customUA: this.customUA,
                         keywordGroups: this.keywordGroups,
                         customShortCode: this.customShortCode,
                         accordionSections: this.accordionSections
@@ -223,7 +218,6 @@ export const formLogicFn = (t) => {
                 if (settings.externalUiDownloadUrl !== undefined) this.externalUiDownloadUrl = settings.externalUiDownloadUrl;
                 if (settings.configType !== undefined) this.configType = settings.configType;
                 if (settings.configEditor !== undefined) this.configEditor = settings.configEditor;
-                if (settings.customUA !== undefined) this.customUA = settings.customUA;
                 if (settings.keywordGroups !== undefined) this.keywordGroups = settings.keywordGroups;
                 if (settings.customShortCode !== undefined) this.customShortCode = settings.customShortCode;
                 if (settings.accordionSections !== undefined) this.accordionSections = settings.accordionSections;
@@ -363,7 +357,6 @@ export const formLogicFn = (t) => {
                     this.enableClashUI = false;
                     this.externalController = '';
                     this.externalUiDownloadUrl = '';
-                    this.customUA = '';
                     this.keywordGroups = [];
                     this.generatedLinks = null;
                     this.shortenedLinks = null;
@@ -374,7 +367,7 @@ export const formLogicFn = (t) => {
                     const keysToRemove = [
                         'inputTextarea', 'advancedToggle', 'groupByCountry', 
                         'enableClashUI', 'externalController', 'externalUiDownloadUrl',
-                        'userAgent', 'configEditor', 'configType', 'customShortCode',
+                        'configEditor', 'configType', 'customShortCode',
                         'accordionSections', 'keywordGroups', 'selectedRules', 
                         'selectedPredefinedRule', 'customRules'
                     ];
@@ -448,7 +441,6 @@ export const formLogicFn = (t) => {
                         externalUiDownloadUrl: this.externalUiDownloadUrl,
                         configType: this.configType,
                         configEditor: this.configEditor,
-                        customUA: this.customUA,
                         keywordGroups: this.keywordGroups,
                         customShortCode: this.customShortCode,
                         accordionSections: this.accordionSections
@@ -495,7 +487,6 @@ export const formLogicFn = (t) => {
                         if (settings.externalUiDownloadUrl !== undefined) this.externalUiDownloadUrl = settings.externalUiDownloadUrl;
                         if (settings.configType !== undefined) this.configType = settings.configType;
                         if (settings.configEditor !== undefined) this.configEditor = settings.configEditor;
-                        if (settings.customUA !== undefined) this.customUA = settings.customUA;
                         if (settings.keywordGroups !== undefined) this.keywordGroups = settings.keywordGroups;
                         if (settings.customShortCode !== undefined) this.customShortCode = settings.customShortCode;
                         if (settings.accordionSections !== undefined) this.accordionSections = settings.accordionSections;
@@ -540,7 +531,6 @@ export const formLogicFn = (t) => {
                     const origin = window.location.origin;
                     const params = new URLSearchParams();
                     params.append('config', this.input);
-                    params.append('ua', this.customUA);
                     params.append('selectedRules', JSON.stringify(this.selectedRules));
                     params.append('customRules', JSON.stringify(customRules));
 
@@ -801,11 +791,6 @@ export const formLogicFn = (t) => {
                     this.externalUiDownloadUrl = externalUiDownloadUrl;
                 }
 
-                const ua = params.get('ua');
-                if (ua) {
-                    this.customUA = ua;
-                }
-
                 const configId = params.get('configId');
                 if (configId) {
                     this.currentConfigId = configId;
@@ -814,7 +799,7 @@ export const formLogicFn = (t) => {
 
                 // Expand advanced options if any advanced settings are present
                 if (selectedRules || customRules || this.groupByCountry || this.enableClashUI ||
-                    externalController || externalUiDownloadUrl || ua || configId) {
+                    externalController || externalUiDownloadUrl || configId) {
                     this.showAdvanced = true;
                 }
             }

@@ -134,18 +134,12 @@ function detectFormat(content) {
 /**
  * Fetch subscription content from a URL and parse it
  * @param {string} url - The subscription URL to fetch
- * @param {string} userAgent - Optional User-Agent header
  * @returns {Promise<object|string[]|null>} - Parsed subscription content
  */
-export async function fetchSubscription(url, userAgent) {
+export async function fetchSubscription(url) {
     try {
-        const headers = new Headers();
-        if (userAgent) {
-            headers.set('User-Agent', userAgent);
-        }
         const response = await fetch(url, {
             method: 'GET',
-            headers: headers
         });
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
@@ -163,7 +157,6 @@ export async function fetchSubscription(url, userAgent) {
 /**
  * Fetch subscription content and detect its format without parsing
  * @param {string} url - The subscription URL to fetch
- * @param {string} userAgent - Optional User-Agent header
  * @param {object} options - Optional parameters
  * @param {object} options.kv - KV store instance for caching
  * @param {number} options.cacheTtl - Cache TTL in seconds (default: 300)
@@ -172,7 +165,7 @@ export async function fetchSubscription(url, userAgent) {
  * @param {number} options.retryDelay - Base retry delay in milliseconds (default: 1000)
  * @returns {Promise<{content: string, format: 'clash'|'singbox'|'unknown', url: string}|null>}
  */
-export async function fetchSubscriptionWithFormat(url, userAgent, options = {}) {
+export async function fetchSubscriptionWithFormat(url, options = {}) {
     const {
         kv = null,
         cacheTtl = 300,
@@ -201,16 +194,10 @@ export async function fetchSubscriptionWithFormat(url, userAgent, options = {}) 
 
         // Fetch from remote with retry and timeout
         const fetchFn = async () => {
-            const headers = new Headers();
-            if (userAgent) {
-                headers.set('User-Agent', userAgent);
-            }
-
             const response = await fetchWithTimeout(
                 url,
                 {
-                    method: 'GET',
-                    headers: headers
+                    method: 'GET'
                 },
                 timeout
             );

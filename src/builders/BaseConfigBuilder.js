@@ -4,13 +4,12 @@ import { createTranslator } from '../i18n/index.js';
 import { generateRules, getOutbounds, PREDEFINED_RULE_SETS } from '../config/index.js';
 
 export class BaseConfigBuilder {
-    constructor(inputString, baseConfig, lang, userAgent, groupByCountry = false, keywordGroups = [], defaultExclude = [], kv = null, subscriptionCacheTtl = 300, subscriptionTimeout = 10000, subscriptionMaxRetries = 3) {
+    constructor(inputString, baseConfig, lang, groupByCountry = false, keywordGroups = [], defaultExclude = [], kv = null, subscriptionCacheTtl = 300, subscriptionTimeout = 10000, subscriptionMaxRetries = 3) {
         this.inputString = inputString;
         this.config = deepCopy(baseConfig);
         this.customRules = [];
         this.selectedRules = [];
         this.t = createTranslator(lang);
-        this.userAgent = userAgent;
         this.appliedOverrideKeys = new Set();
         this.groupByCountry = groupByCountry;
         this.keywordGroups = keywordGroups || [];  // Keyword group definitions
@@ -187,7 +186,7 @@ export class BaseConfigBuilder {
                     const hashConfig = this.parseUrlHash(trimmedUrl);
 
                     try {
-                        const fetchResult = await fetchSubscriptionWithFormat(trimmedUrl, this.userAgent, {
+                        const fetchResult = await fetchSubscriptionWithFormat(trimmedUrl, {
                             kv: this.kv,
                             cacheTtl: this.subscriptionCacheTtl,
                             timeout: this.subscriptionTimeout,
@@ -247,7 +246,7 @@ export class BaseConfigBuilder {
                                         }
                                         parsedItems.push(item);
                                     } else if (typeof item === 'string') {
-                                        const subResult = await ProxyParser.parse(item, this.userAgent);
+                                        const subResult = await ProxyParser.parse(item);
                                         if (subResult) {
                                             const subName = this.getProxyIdentifier(subResult);
                                             if (!subName) continue;
@@ -274,7 +273,7 @@ export class BaseConfigBuilder {
                 }
 
                 // Non-HTTP URLs (protocol URIs like ss://, vmess://, etc.)
-                const result = await ProxyParser.parse(processedUrl, this.userAgent);
+                const result = await ProxyParser.parse(processedUrl);
                 // Handle yamlConfig, singboxConfig, and surgeConfig types (they have the same structure)
                 if (result && typeof result === 'object' && (result.type === 'yamlConfig' || result.type === 'singboxConfig' || result.type === 'surgeConfig')) {
                     if (result.config) {
@@ -294,7 +293,7 @@ export class BaseConfigBuilder {
                         if (item && typeof item === 'object' && item.tag) {
                             parsedItems.push(item);
                         } else if (typeof item === 'string') {
-                            const subResult = await ProxyParser.parse(item, this.userAgent);
+                            const subResult = await ProxyParser.parse(item);
                             if (subResult) {
                                 parsedItems.push(subResult);
                             }

@@ -18,8 +18,6 @@ import { ServiceError, MissingDependencyError } from '../services/errors.js';
 import { normalizeRuntime } from '../runtime/runtimeConfig.js';
 import { PREDEFINED_RULE_SETS, SING_BOX_CONFIG, SING_BOX_CONFIG_V1_11 } from '../config/index.js';
 
-const DEFAULT_USER_AGENT = 'curl/7.74.0';
-
 export function createApp(bindings = {}) {
     const runtime = normalizeRuntime(bindings);
     const services = {
@@ -41,16 +39,13 @@ export function createApp(bindings = {}) {
         if (type === 'xray') {
             const proxylist = config.split('\n');
             const finalProxyList = [];
-            const userAgent = queryGetter('ua') || DEFAULT_USER_AGENT;
-            const headers = { 'User-Agent': userAgent };
-
             for (const proxy of proxylist) {
                 const trimmedProxy = proxy.trim();
                 if (!trimmedProxy) continue;
 
                 if (trimmedProxy.startsWith('http://') || trimmedProxy.startsWith('https://')) {
                     try {
-                        const response = await fetch(trimmedProxy, { method: 'GET', headers });
+                        const response = await fetch(trimmedProxy, { method: 'GET' });
                         const text = await response.text();
                         let processed = tryDecodeSubscriptionLines(text, { decodeUriComponent: true });
                         if (!Array.isArray(processed)) processed = [processed];
@@ -77,7 +72,6 @@ export function createApp(bindings = {}) {
         const selectedRules = parseSelectedRules(queryGetter('selectedRules'));
         const customRules = parseJsonArray(queryGetter('customRules'));
         const keywordGroups = parseJsonArray(queryGetter('keyword_groups'));
-        const ua = queryGetter('ua') || DEFAULT_USER_AGENT;
         const groupByCountry = parseBooleanFlag(queryGetter('group_by_country'));
         const enableClashUI = parseBooleanFlag(queryGetter('enable_clash_ui'));
         const externalController = queryGetter('external_controller');
@@ -114,7 +108,6 @@ export function createApp(bindings = {}) {
                 customRules,
                 sbBaseConfig,
                 lang,
-                ua,
                 groupByCountry,
                 enableClashUI,
                 externalController,
@@ -137,7 +130,6 @@ export function createApp(bindings = {}) {
                 customRules,
                 baseConfig,
                 lang,
-                ua,
                 groupByCountry,
                 enableClashUI,
                 externalController,
@@ -161,7 +153,6 @@ export function createApp(bindings = {}) {
                 customRules,
                 baseConfig,
                 lang,
-                ua,
                 groupByCountry,
                 keywordGroups,
                 defaultExclude,
@@ -182,7 +173,6 @@ export function createApp(bindings = {}) {
                 customRules,
                 baseConfig,
                 lang,
-                ua,
                 defaultExclude,
                 runtime.kv,
                 runtime.config.subscriptionCacheTtl
