@@ -40,7 +40,17 @@ export const Form = (props) => {
     customShortCode: t('customShortCode'),
     optional: t('optional'),
     customShortCodePlaceholder: t('customShortCodePlaceholder'),
-    showFullLinks: t('showFullLinks')
+    showFullLinks: t('showFullLinks'),
+    profiles: t('profiles'),
+    profileNameRequired: t('profileNameRequired'),
+    profileNamePlaceholder: t('profileNamePlaceholder'),
+    saveProfile: t('saveProfile'),
+    overwriteProfile: t('overwriteProfile'),
+    profileSaved: t('profileSaved'),
+    loadProfileConfirm: t('loadProfileConfirm'),
+    deleteProfileConfirm: t('deleteProfileConfirm'),
+    load: t('load'),
+    delete: t('delete')
   };
 
   const scriptContent = `
@@ -65,7 +75,7 @@ export const Form = (props) => {
             </span>
           }
           model="input"
-          rows={5}
+          rows={4}
           placeholder={t('urlPlaceholder')}
           required
           labelActionsWrapperClass="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
@@ -102,7 +112,7 @@ export const Form = (props) => {
       {/* Advanced Options Toggle */}
       <div 
         class="flex items-center justify-between bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm border border-gray-200 dark:border-gray-700 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors" 
-        x-on:click="showAdvanced = !showAdvanced"
+        {...{'x-on:click': 'showAdvanced = !showAdvanced'}}
         role="button"
         tabindex="0"
         {...{
@@ -118,7 +128,7 @@ export const Form = (props) => {
         </div>
         <div 
           class="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 transition-transform duration-300" 
-          x-bind:class="{'rotate-180': showAdvanced}"
+          {...{'x-bind:class': "{'rotate-180': showAdvanced}"}}
         >
           <i class="fas fa-chevron-down"></i>
         </div>
@@ -134,7 +144,7 @@ export const Form = (props) => {
           <i class="fas fa-filter text-gray-400"></i>
           {t('ruleSelection')}
         </h3>
-        <select x-model="selectedPredefinedRule" x-on:change="applyPredefinedRule()" class="px-3 py-1.5 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700 text-sm font-medium text-gray-700 dark:text-gray-200 focus:ring-2 focus:ring-primary-500 focus:border-transparent">
+        <select x-model="selectedPredefinedRule" {...{'x-on:change': 'applyPredefinedRule()'}} class="px-3 py-1.5 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700 text-sm font-medium text-gray-700 dark:text-gray-200 focus:ring-2 focus:ring-primary-500 focus:border-transparent">
         <option value="custom">{t('custom')}</option>
         <option value="minimal">{t('minimal')}</option>
         <option value="balanced">{t('balanced')}</option>
@@ -145,14 +155,13 @@ export const Form = (props) => {
   <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
     {UNIFIED_RULES.map((rule) => (
       <label class="flex items-center p-3 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50 cursor-pointer transition-colors group">
-        <input
-          type="checkbox"
-          value={rule.name}
-          x-model="selectedRules" 
-                    x-on:change="selectedPredefinedRule = 'custom'"
-        class="w-4 h-4 text-primary-600 rounded border-gray-300 focus:ring-primary-500 dark:bg-gray-700 dark:border-gray-600"
-                  />
-        <span class="ml-3 text-sm font-medium text-gray-700 dark:text-gray-300 group-hover:text-gray-900 dark:group-hover:text-white transition-colors">
+                  <input
+                    type="checkbox"
+                    value={rule.name}
+                    x-model="selectedRules" 
+                    {...{'x-on:change': "selectedPredefinedRule = 'custom'"}}
+                    class="w-4 h-4 text-primary-600 rounded border-gray-300 focus:ring-primary-500 dark:bg-gray-700 dark:border-gray-600"
+                  />        <span class="ml-3 text-sm font-medium text-gray-700 dark:text-gray-300 group-hover:text-gray-900 dark:group-hover:text-white transition-colors">
           {t(`outboundNames.${rule.name}`)}
         </span>
       </label>
@@ -209,136 +218,162 @@ export const Form = (props) => {
                 </div>
               </div>
 
-              {/* 关键词自动分组 */}
-              <div class="border-t border-gray-200 dark:border-gray-700 pt-4 mt-4">
-                <div class="flex items-center justify-between mb-3">
-                  <label class="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300">
-                    <i class="fas fa-tags text-primary-600 dark:text-primary-400"></i>
-                    <span>{t('keywordGrouping')}</span>
+          </div>
+          </div>
+
+  {/* 关键词自动分组 */}
+  <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+    <div class="flex flex-col gap-3">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-full bg-primary-50 dark:bg-primary-900/20 text-primary-600 dark:text-primary-400 flex items-center justify-center">
+            <i class="fas fa-tags"></i>
+          </div>
+          <div>
+            <h3 class="text-lg font-semibold text-gray-900 dark:text-white">{t('keywordGrouping')}</h3>
+            <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">根据关键词将节点自动分组，可结合分组类型快速测速或手选。</p>
+          </div>
+        </div>
+        <div class="flex items-center gap-2">
+          <div class="hidden sm:flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400 border border-gray-200 dark:border-gray-700 rounded-lg px-2 py-1">
+            <span class="flex items-center gap-1">
+              <i class="fas fa-layer-group text-[10px]"></i>
+              <span {...{'x-text': "keywordGroups.length"}}></span>
+            </span>
+            <span class="w-px h-3 bg-gray-200 dark:bg-gray-700"></span>
+            <span class="flex items-center gap-1">
+              <i class="fas fa-key text-[10px]"></i>
+              <span {...{'x-text': "keywordGroups.reduce((sum, g) => sum + (g.keywords?.length || 0), 0)"}}></span>
+            </span>
+          </div>
+          <button
+            type="button"
+            {...{'x-on:click': 'addKeywordGroup()'}}
+            class="px-3 py-1.5 text-xs font-semibold bg-primary-50 dark:bg-primary-900/20 text-primary-600 dark:text-primary-400 rounded-lg hover:bg-primary-100 dark:hover:bg-primary-900/30 transition-colors flex items-center gap-1.5"
+          >
+            <i class="fas fa-plus text-xs"></i>
+            <span>{t('addGroup')}</span>
+          </button>
+        </div>
+      </div>
+
+      {/* 关键词分组列表 */}
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-3" {...{'x-show': 'keywordGroups.length > 0'}}>
+        <template {...{'x-for': '(group, groupIndex) in keywordGroups', 'x-bind:key': 'groupIndex'}}>
+          <div class="bg-gray-50 dark:bg-gray-700/30 rounded-lg p-3 space-y-3">
+            <div class="flex gap-2 items-start">
+              <div class="flex-1 space-y-2">
+                <div class="flex items-center gap-2">
+                  <button
+                    type="button"
+                    {...{'x-on:click': 'toggleEmojiPicker(groupIndex)'}}
+                    class="w-10 h-10 flex items-center justify-center bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                  >
+                    <span {...{'x-text': "keywordGroups[groupIndex].emoji || '🏢'"}}></span>
+                  </button>
+                  <input
+                    type="text"
+                    {...{'x-model': 'keywordGroups[groupIndex].name'}}
+                    placeholder={t('groupNamePlaceholder')}
+                    class="flex-1 px-3 py-2 text-sm bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-1 focus:ring-primary-500 focus:border-transparent"
+                  />
+                </div>
+
+                <div 
+                  x-show="showEmojiPicker === groupIndex"
+                  {...{'x-on:click.away': 'showEmojiPicker = null'}}
+                  class="relative"
+                >
+                  <div class="absolute z-50 mt-1 p-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl w-64">
+                    <div class="grid grid-cols-8 gap-1 max-h-48 overflow-y-auto p-1">
+                      <template {...{'x-for': 'emoji in commonEmojis', 'x-bind:key': 'emoji'}}>
+                        <button
+                          type="button"
+                          {...{'x-on:click': 'selectEmoji(groupIndex, emoji)'}}
+                          class="w-7 h-7 flex items-center justify-center hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors text-sm"
+                          {...{'x-text': 'emoji'}}
+                        ></button>
+                      </template>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="flex items-center gap-2">
+                  <select
+                    {...{'x-model': 'keywordGroups[groupIndex].type'}}
+                    class="px-2.5 py-2 text-sm bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-1 focus:ring-primary-500 focus:border-transparent"
+                  >
+                    <option value="select">{t('select')}</option>
+                    <option value="urltest">{t('urltest')}</option>
+                  </select>
+                  <label class="flex items-center gap-1.5 text-xs text-gray-600 dark:text-gray-400 whitespace-nowrap">
+                    <input
+                      type="checkbox"
+                      {...{'x-model': 'keywordGroups[groupIndex].includeDirect'}}
+                      class="w-3 h-3 text-primary-600 bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 rounded focus:ring-1 focus:ring-primary-500"
+                    />
+                    <span>DIRECT</span>
                   </label>
                   <button
                     type="button"
-                    {...{'x-on:click': 'addKeywordGroup()'}}
-                    class="px-2.5 py-1 text-xs font-medium bg-primary-50 dark:bg-primary-900/20 text-primary-600 dark:text-primary-400 rounded hover:bg-primary-100 dark:hover:bg-primary-900/30 transition-colors flex items-center gap-1"
+                    {...{'x-on:click': 'removeKeywordGroup(groupIndex)'}}
+                    class="ml-auto px-2.5 py-2 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors text-xs"
+                    title={t('remove')}
                   >
-                    <i class="fas fa-plus text-xs"></i>
-                    <span>{t('addGroup')}</span>
+                    <i class="fas fa-trash"></i>
                   </button>
                 </div>
+              </div>
+            </div>
 
-                {/* 关键词分组列表 */}
-                <div class="space-y-3" {...{'x-show': 'keywordGroups.length > 0'}}>
-                  <template {...{'x-for': '(group, groupIndex) in keywordGroups', 'x-bind:key': 'groupIndex'}}>
-                    <div class="bg-gray-50 dark:bg-gray-700/30 rounded-lg p-3 space-y-2">
-                      <div class="flex gap-2">
-                        <input
-                          type="text"
-                          {...{'x-model': 'keywordGroups[groupIndex].name'}}
-                          placeholder={t('groupNamePlaceholder')}
-                          class="flex-1 px-2 py-1.5 text-sm bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded focus:ring-1 focus:ring-primary-500 focus:border-transparent"
-                        />
-                        <div class="relative">
-                          <button
-                            type="button"
-                            {...{'x-on:click': 'toggleEmojiPicker(groupIndex)'}}
-                            class="w-10 h-[38px] flex items-center justify-center bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
-                          >
-                            <span {...{'x-text': "keywordGroups[groupIndex].emoji || '🏢'"}}></span>
-                          </button>
-                          
-                          <div 
-                            x-show="showEmojiPicker === groupIndex"
-                            {...{'x-on:click.away': 'showEmojiPicker = null'}}
-                            class="absolute z-50 mt-1 p-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl w-64"
-                            style="left: 0;"
-                          >
-                            <div class="grid grid-cols-8 gap-1 max-h-48 overflow-y-auto p-1">
-                              <template {...{'x-for': 'emoji in commonEmojis', 'x-bind:key': 'emoji'}}>
-                                <button
-                                  type="button"
-                                  {...{'x-on:click': 'selectEmoji(groupIndex, emoji)'}}
-                                  class="w-7 h-7 flex items-center justify-center hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors text-sm"
-                                  {...{'x-text': 'emoji'}}
-                                ></button>
-                              </template>
-                            </div>
-                          </div>
-                        </div>
-                        <select
-                          {...{'x-model': 'keywordGroups[groupIndex].type'}}
-                          class="px-2 py-1.5 text-sm bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded focus:ring-1 focus:ring-primary-500 focus:border-transparent"
-                        >
-                          <option value="select">{t('select')}</option>
-                          <option value="urltest">{t('urltest')}</option>
-                        </select>
-                        <button
-                          type="button"
-                          {...{'x-on:click': 'removeKeywordGroup(groupIndex)'}}
-                          class="px-2 py-1.5 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-colors"
-                          title={t('remove')}
-                        >
-                          <i class="fas fa-trash text-xs"></i>
-                        </button>
-                      </div>
-
-                      <div class="flex gap-2 items-start">
-                        <label class="flex items-center gap-1.5 text-xs text-gray-600 dark:text-gray-400 whitespace-nowrap pt-1.5">
-                          <input
-                            type="checkbox"
-                            {...{'x-model': 'keywordGroups[groupIndex].includeDirect'}}
-                            class="w-3 h-3 text-primary-600 bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 rounded focus:ring-1 focus:ring-primary-500"
-                          />
-                          <span>DIRECT</span>
-                        </label>
-                        <div class="flex-1" {...{'x-data': "{ newKeyword: '' }"}}>
-                          <div class="flex gap-1 mb-1">
-                            <input
-                              type="text"
-                              {...{'x-model': 'newKeyword'}}
-                              {...{'x-on:keydown.enter.prevent': "if(newKeyword.trim()) addKeyword(groupIndex, newKeyword); newKeyword = '';"}}
-                              placeholder={t('addKeywordPlaceholder')}
-                              class="flex-1 px-2 py-1 text-xs bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded focus:ring-1 focus:ring-primary-500 focus:border-transparent"
-                            />
-                            <button
-                              type="button"
-                              {...{'x-on:click': "if(newKeyword.trim()) addKeyword(groupIndex, newKeyword); newKeyword = '';"}}
-                              class="px-2 py-1 text-xs bg-primary-600 text-white rounded hover:bg-primary-700 transition-colors"
-                            >
-                              <i class="fas fa-plus"></i>
-                            </button>
-                          </div>
-                          <div class="flex flex-wrap gap-1">
-                            <template {...{'x-for': '(keyword, keywordIndex) in keywordGroups[groupIndex].keywords', 'x-bind:key': 'keywordIndex'}}>
-                              <span class="inline-flex items-center gap-1 px-1.5 py-0.5 bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 text-xs rounded">
-                                <span {...{'x-text': 'keyword'}}></span>
-                                <button
-                                  type="button"
-                                  {...{'x-on:click': 'removeKeyword(groupIndex, keywordIndex)'}}
-                                  class="hover:text-primary-900 dark:hover:text-primary-100"
-                                >
-                                  <i class="fas fa-times text-xs"></i>
-                                </button>
-                              </span>
-                            </template>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
+            <div class="flex gap-2 items-start">
+              <div class="flex-1" {...{'x-data': "{ newKeyword: '' }"}}>
+                <div class="flex gap-1 mb-2">
+                  <input
+                    type="text"
+                    {...{'x-model': 'newKeyword'}}
+                    {...{'x-on:keydown.enter.prevent': "if(newKeyword.trim()) addKeyword(groupIndex, newKeyword); newKeyword = '';"}}
+                    placeholder={t('addKeywordPlaceholder')}
+                    class="flex-1 px-3 py-2 text-xs bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-1 focus:ring-primary-500 focus:border-transparent"
+                  />
+                  <button
+                    type="button"
+                    {...{'x-on:click': "if(newKeyword.trim()) addKeyword(groupIndex, newKeyword); newKeyword = '';"}}
+                    class="px-3 py-2 text-xs bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
+                  >
+                    <i class="fas fa-plus"></i>
+                  </button>
+                </div>
+                <div class="flex flex-wrap gap-1.5">
+                  <template {...{'x-for': '(keyword, keywordIndex) in keywordGroups[groupIndex].keywords', 'x-bind:key': 'keywordIndex'}}>
+                    <span class="inline-flex items-center gap-1.5 px-2 py-1 bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 text-xs rounded-lg">
+                      <span {...{'x-text': 'keyword'}}></span>
+                      <button
+                        type="button"
+                        {...{'x-on:click': 'removeKeyword(groupIndex, keywordIndex)'}}
+                        class="hover:text-primary-900 dark:hover:text-primary-100"
+                      >
+                        <i class="fas fa-times text-[10px]"></i>
+                      </button>
+                    </span>
                   </template>
                 </div>
-
-                {/* 空状态 */}
-                <div
-                  {...{'x-show': 'keywordGroups.length === 0'}}
-                  class="text-center py-4 text-gray-400 dark:text-gray-500 text-xs"
-                >
-                  <i class="fas fa-tags text-xl mb-1 opacity-50"></i>
-                  <p>{t('noKeywordGroups')}</p>
-                </div>
               </div>
+            </div>
+          </div>
+        </template>
+      </div>
 
-          </div>
-          </div>
+      {/* 空状态 */}
+      <div
+        {...{'x-show': 'keywordGroups.length === 0'}}
+        class="text-center py-6 text-gray-400 dark:text-gray-500 text-xs border border-dashed border-gray-200 dark:border-gray-700 rounded-xl"
+      >
+        <i class="fas fa-tags text-xl mb-1 opacity-50"></i>
+        <p>{t('noKeywordGroups')}</p>
+      </div>
+    </div>
+  </div>
 
   {/* Base Config */ }
   <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
@@ -392,14 +427,14 @@ export const Form = (props) => {
             <div class="flex justify-end gap-3 mt-4">
               <button 
                 type="button" 
-                x-on:click="saveBaseConfig()" 
-                x-bind:disabled="savingConfig"
+                {...{'x-on:click': 'saveBaseConfig()'}}
+                {...{'x-bind:disabled': 'savingConfig'}}
                 class="px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors font-medium text-sm disabled:opacity-70 disabled:cursor-not-allowed flex items-center gap-2"
               >
-                <i class="fas" x-bind:class="savingConfig ? 'fa-spinner fa-spin' : 'fa-save'"></i>
+                <i class="fas" {...{'x-bind:class': "savingConfig ? 'fa-spinner fa-spin' : 'fa-save'"}}></i>
                 <span x-text="savingConfig ? savingConfigText : saveConfigText">{t('saveConfig')}</span>
               </button>
-              <button type="button" x-on:click="clearBaseConfig()" class="px-4 py-2 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/40 transition-colors font-medium text-sm" >
+              <button type="button" {...{'x-on:click': 'clearBaseConfig()'}} class="px-4 py-2 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/40 transition-colors font-medium text-sm" >
   { t('clearConfig') }
               </button>
           </div>
@@ -418,55 +453,49 @@ export const Form = (props) => {
               placeholder="curl/7.74.0" 
             />
           </div>
+
+    {/* Profiles Management */}
+    {/* Moved to Navbar */}
         </div>
 
   {/* Action Buttons */ }
   <div class="flex flex-col sm:flex-row gap-4">
-          <button 
-            type="submit" 
+          <button
+            type="submit"
             class="flex-1 py-3.5 px-6 bg-gradient-to-r from-primary-600 to-primary-500 hover:from-primary-700 hover:to-primary-600 text-white rounded-xl font-bold shadow-lg shadow-primary-500/30 hover:shadow-primary-500/40 transform hover:-translate-y-0.5 transition-all duration-200 flex items-center justify-center gap-2"
-            x-bind:disabled="loading"
+            {...{'x-bind:disabled': 'loading'}}
           >
-            <i class="fas fa-sync-alt" x-bind:class="loading ? 'fa-spinner fa-spin' : 'fa-sync-alt'"></i>
+            <i class="fas" {...{'x-bind:class': "loading ? 'fa-spinner fa-spin' : 'fa-sync-alt'"}}></i>
             <span x-text="loading ? processingText : convertText">{t('convert')}</span>
           </button>
 
-  <button
-    type="button" 
-            x-on:click="clearAll()"
-class="px-6 py-3.5 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-700 rounded-xl font-semibold hover:bg-gray-50 dark:hover:bg-gray-700 transition-all duration-200 flex items-center justify-center gap-2 shadow-sm"
-  >
-  <i class="fas fa-trash-alt"></i>
-{ t('clear') }
+          <button
+            type="button"
+            {...{'x-on:click': "window.dispatchEvent(new CustomEvent('request-save-profile'))"}}
+            class="px-6 py-3.5 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-700 rounded-xl font-bold hover:bg-gray-50 dark:hover:bg-gray-700 hover:border-gray-300 dark:hover:border-gray-600 transform hover:-translate-y-0.5 transition-all duration-200 flex items-center justify-center gap-2 shadow-lg"
+          >
+            <i class="fas fa-save"></i>
+            <span>{t('saveProfile')}</span>
+          </button>
+
+          <button
+            type="button"
+            {...{'x-on:click': 'clearAll()'}}
+            class="px-6 py-3.5 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-700 rounded-xl font-bold hover:bg-gray-50 dark:hover:bg-gray-700 hover:border-gray-300 dark:hover:border-gray-600 transform hover:-translate-y-0.5 transition-all duration-200 flex items-center justify-center gap-2 shadow-lg"
+          >
+            <i class="fas fa-trash-alt"></i>
+            <span>{t('clear')}</span>
           </button>
         </div>
 
-        {/* Config Management Buttons */}
-        <div class="flex flex-col sm:flex-row gap-4 mt-4">
-          <button
-            type="button"
-            x-on:click="exportConfig()"
-            class="flex-1 py-2 px-4 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-all duration-200 flex items-center justify-center gap-2 font-medium"
-          >
-            <i class="fas fa-download"></i>
-            <span>{t('exportConfig')}</span>
-          </button>
-          <button
-            type="button"
-            x-on:click="$refs.fileInput.click()"
-            class="flex-1 py-2 px-4 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-all duration-200 flex items-center justify-center gap-2 font-medium"
-          >
-            <i class="fas fa-upload"></i>
-            <span>{t('importConfig')}</span>
-          </button>
-          <input
-            type="file"
-            x-ref="fileInput"
-            class="hidden"
-            accept=".json"
-            x-on:change="importConfig($event)"
-          />
-        </div>
+        {/* Hidden file input for config import */}
+        <input
+          type="file"
+          x-ref="fileInput"
+          class="hidden"
+          accept=".json"
+          {...{'x-on:change': 'importConfig($event)'}}
+        />
       </form>
 
   {/* Results Section */ }
@@ -491,22 +520,22 @@ class="px-6 py-3.5 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 bo
               <input
                 type="text"
                 readonly
-                x-bind:value={`shortenedLinks ? shortenedLinks?.${field.key} : generatedLinks?.${field.key}`}
+                {...{'x-bind:value': `shortenedLinks ? shortenedLinks?.${field.key} : generatedLinks?.${field.key}`}}
                 class="w-full px-4 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 focus:ring-2 focus:border-transparent transition-all duration-200 font-mono text-sm"
-                x-bind:class="shortenedLinks ? 'text-primary-600 dark:text-primary-400 font-semibold focus:ring-primary-500' : 'text-gray-600 dark:text-gray-400 focus:ring-green-500'"
+                {...{'x-bind:class': "shortenedLinks ? 'text-primary-600 dark:text-primary-400 font-semibold focus:ring-primary-500' : 'text-gray-600 dark:text-gray-400 focus:ring-green-500'"}}
               />
               <button
                 type="button"
-                x-on:click={`navigator.clipboard.writeText((shortenedLinks || generatedLinks)?.${field.key}); copied = '${field.key}'; setTimeout(() => copied = null, 2000)`}
+                {...{'x-on:click': `navigator.clipboard.writeText((shortenedLinks || generatedLinks)?.${field.key}); copied = '${field.key}'; setTimeout(() => copied = null, 2000)`}}
                 class="px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 rounded-lg transition-colors duration-200 flex items-center justify-center gap-2"
-                x-bind:class={`{
+                {...{'x-bind:class': `{
                   'hover:bg-green-100 dark:hover:bg-green-900/30 hover:text-green-600 dark:hover:text-green-400': !shortenedLinks,
                   'hover:bg-primary-100 dark:hover:bg-primary-900/30 hover:text-primary-600 dark:hover:text-primary-400': shortenedLinks,
                   'bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400': !shortenedLinks && copied === '${field.key}',
                   'bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400': shortenedLinks && copied === '${field.key}'
-                }`}
+                }`}}
               >
-                <i class="fas" x-bind:class={`copied === '${field.key}' ? 'fa-check' : 'fa-copy'`}></i>
+                <i class="fas" {...{'x-bind:class': `copied === '${field.key}' ? 'fa-check' : 'fa-copy'`}}></i>
               </button>
             </div>
           </div>
@@ -531,16 +560,14 @@ class="px-6 py-3.5 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 bo
         <div class="flex justify-center mt-4">
           <button
             type="button"
-            x-on:click="shortenedLinks ? shortenedLinks = null : shortenLinks()"
-            x-bind:disabled="!shortenedLinks && shortening"
+            {...{'x-on:click': "shortenedLinks ? shortenedLinks = null : shortenLinks()"}}
+            {...{'x-bind:disabled': "!shortenedLinks && shortening"}}
             class="px-6 py-3 rounded-xl font-semibold transition-all duration-200 flex items-center gap-2 shadow-lg"
-            x-bind:class="shortenedLinks
-              ? 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 shadow-sm'
-              : 'bg-gradient-to-r from-primary-600 to-primary-500 hover:from-primary-700 hover:to-primary-600 text-white shadow-primary-500/30 hover:shadow-primary-500/40 disabled:opacity-50 disabled:cursor-not-allowed'"
+            {...{'x-bind:class': "shortenedLinks ? 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 shadow-sm' : 'bg-gradient-to-r from-primary-600 to-primary-500 hover:from-primary-700 hover:to-primary-600 text-white shadow-primary-500/30 hover:shadow-primary-500/40 disabled:opacity-50 disabled:cursor-not-allowed'"}}
           >
             <i
               class="fas"
-              x-bind:class="shortenedLinks ? 'fa-expand-alt' : (shortening ? 'fa-spinner fa-spin' : 'fa-compress-alt')"
+              {...{'x-bind:class': "shortenedLinks ? 'fa-expand-alt' : (shortening ? 'fa-spinner fa-spin' : 'fa-compress-alt')"}}
             ></i>
             <span
               x-text="shortenedLinks ? showFullLinksText : (shortening ? shorteningText : shortenLinksText)"

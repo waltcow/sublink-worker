@@ -5,7 +5,6 @@ import { Layout } from '../components/Layout.jsx';
 import { Navbar } from '../components/Navbar.jsx';
 import { Form } from '../components/Form.jsx';
 import { Footer } from '../components/Footer.jsx';
-import { UpdateChecker } from '../components/UpdateChecker.jsx';
 import { SingboxConfigBuilder } from '../builders/SingboxConfigBuilder.js';
 import { ClashConfigBuilder } from '../builders/ClashConfigBuilder.js';
 import { SurgeConfigBuilder } from '../builders/SurgeConfigBuilder.js';
@@ -46,7 +45,7 @@ export function createApp(bindings = {}) {
         return c.html(
             <Layout title={t('pageTitle')} description={t('pageDescription')} keywords={t('pageKeywords')}>
                 <div class="flex flex-col min-h-screen">
-                    <Navbar />
+                    <Navbar t={t} />
                     <main class="flex-1">
                         <div class="container mx-auto px-4 py-8 pt-24">
                             <div class="max-w-4xl mx-auto">
@@ -63,7 +62,6 @@ export function createApp(bindings = {}) {
                         </div>
                     </main>
                     <Footer />
-                    <UpdateChecker />
                 </div>
             </Layout>
         );

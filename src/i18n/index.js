@@ -158,6 +158,7 @@ export const translations = {
     tryShortLinks: '请尝试使用短链接！',
     configSaved: '配置保存成功！',
     configSaveFailed: '保存配置失败',
+    configManagement: '导入/导出',
     exportConfig: '导出配置',
     importConfig: '导入配置',
     importConfigConfirm: '导入配置将覆盖当前设置，是否继续？',
@@ -167,11 +168,18 @@ export const translations = {
     validJSON: '有效的JSON',
     rules: '条规则',
     rule: '规则',
-    // UpdateChecker
-    newVersionAvailable: '发现新版本',
-    viewRelease: '查看更新',
-    updateGuide: '更新指南',
-    later: '稍后'
+    // Profile Management
+    profiles: 'Profile',
+    profileNameRequired: '请输入 Profile 名称',
+    profileNamePlaceholder: 'Profile 名称',
+    saveProfile: '保存 Profile',
+    overwriteProfile: '覆盖现有 Profile？',
+    profileSaved: 'Profile 保存成功！',
+    loadProfileConfirm: '加载此 Profile？未保存的更改将丢失。',
+    deleteProfileConfirm: '确定要删除此 Profile 吗？',
+    load: '加载',
+    delete: '删除',
+    noProfiles: '暂无已保存的 Profile'
   },
   'en-US': {
     enableClashUI: 'Enable Clash API',
@@ -327,6 +335,7 @@ export const translations = {
     tryShortLinks: 'Try to use short links!',
     configSaved: 'Configuration saved successfully!',
     configSaveFailed: 'Failed to save configuration',
+    configManagement: 'Import/Export',
     exportConfig: 'Export Config',
     importConfig: 'Import Config',
     importConfigConfirm: 'Importing configuration will overwrite your current settings. Continue?',
@@ -336,11 +345,18 @@ export const translations = {
     validJSON: 'Valid JSON',
     rules: 'rules',
     rule: 'Rule',
-    // UpdateChecker
-    newVersionAvailable: 'New Version Available',
-    viewRelease: 'View Release',
-    updateGuide: 'Update Guide',
-    later: 'Later'
+    // Profile Management
+    profiles: 'Profiles',
+    profileNameRequired: 'Please enter a profile name',
+    profileNamePlaceholder: 'Profile Name',
+    saveProfile: 'Save Profile',
+    overwriteProfile: 'Overwrite existing profile?',
+    profileSaved: 'Profile saved successfully!',
+    loadProfileConfirm: 'Load this profile? Unsaved changes will be lost.',
+    deleteProfileConfirm: 'Delete this profile?',
+    load: 'Load',
+    delete: 'Delete',
+    noProfiles: 'No saved profiles'
   }
 };
 

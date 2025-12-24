@@ -30,12 +30,12 @@ export const SubscribeLinks = (props) => {
                         />
                         <button
                             type="button"
-              x-on:click={`$clipboard('${links.xray}'); copied = 'xray'; setTimeout(() => copied = null, 2000)`}
-                        class="px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 rounded-lg hover:bg-green-100 dark:hover:bg-green-900/30 hover:text-green-600 dark:hover:text-green-400 transition-colors duration-200"
-                        x-bind:class="{'bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400': copied === 'xray'}"
-            >
-                        <i class="fas" x-bind:class="copied === 'xray' ? 'fa-check' : 'fa-copy'"></i>
-                </button>
+                            {...{'x-on:click': `$clipboard('${links.xray}'); copied = 'xray'; setTimeout(() => copied = null, 2000)`}}
+                            class="px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 rounded-lg hover:bg-green-100 dark:hover:bg-green-900/30 hover:text-green-600 dark:hover:text-green-400 transition-colors duration-200"
+                            {...{'x-bind:class': "{'bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400': copied === 'xray'}"}}
+                        >
+                            <i class="fas" {...{'x-bind:class': "copied === 'xray' ? 'fa-check' : 'fa-copy'"}}></i>
+                        </button>
             </div>
         </div>
 
@@ -53,12 +53,12 @@ export const SubscribeLinks = (props) => {
             />
             <button
                 type="button"
-              x-on:click={`$clipboard('${links.singbox}'); copied = 'singbox'; setTimeout(() => copied = null, 2000)`}
-            class="px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 rounded-lg hover:bg-green-100 dark:hover:bg-green-900/30 hover:text-green-600 dark:hover:text-green-400 transition-colors duration-200"
-            x-bind:class="{'bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400': copied === 'singbox'}"
+                {...{'x-on:click': `$clipboard('${links.singbox}'); copied = 'singbox'; setTimeout(() => copied = null, 2000)`}}
+                class="px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 rounded-lg hover:bg-green-100 dark:hover:bg-green-900/30 hover:text-green-600 dark:hover:text-green-400 transition-colors duration-200"
+                {...{'x-bind:class': "{'bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400': copied === 'singbox'}"}}
             >
-            <i class="fas" x-bind:class="copied === 'singbox' ? 'fa-check' : 'fa-copy'"></i>
-    </button>
+                <i class="fas" {...{'x-bind:class': "copied === 'singbox' ? 'fa-check' : 'fa-copy'"}}></i>
+            </button>
           </div >
         </div >
 
@@ -76,11 +76,11 @@ export const SubscribeLinks = (props) => {
             />
             <button 
               type="button"
-              x-on:click={`$clipboard('${links.clash}'); copied = 'clash'; setTimeout(() => copied = null, 2000)`}
+              {...{'x-on:click': `$clipboard('${links.clash}'); copied = 'clash'; setTimeout(() => copied = null, 2000)`}}
               class="px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 rounded-lg hover:bg-green-100 dark:hover:bg-green-900/30 hover:text-green-600 dark:hover:text-green-400 transition-colors duration-200"
-              x-bind:class="{'bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400': copied === 'clash'}"
+              {...{'x-bind:class': "{'bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400': copied === 'clash'}"}}
             >
-              <i class="fas" x-bind:class="copied === 'clash' ? 'fa-check' : 'fa-copy'"></i>
+              <i class="fas" {...{'x-bind:class': "copied === 'clash' ? 'fa-check' : 'fa-copy'"}}></i>
             </button >
           </div >
         </div >
@@ -99,11 +99,11 @@ export const SubscribeLinks = (props) => {
             />
             <button 
               type="button"
-              x-on:click={`$clipboard('${links.surge}'); copied = 'surge'; setTimeout(() => copied = null, 2000)`}
+              {...{'x-on:click': `$clipboard('${links.surge}'); copied = 'surge'; setTimeout(() => copied = null, 2000)`}}
               class="px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 rounded-lg hover:bg-green-100 dark:hover:bg-green-900/30 hover:text-green-600 dark:hover:text-green-400 transition-colors duration-200"
-              x-bind:class="{'bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400': copied === 'surge'}"
+              {...{'x-bind:class': "{'bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400': copied === 'surge'}"}}
             >
-              <i class="fas" x-bind:class="copied === 'surge' ? 'fa-check' : 'fa-copy'"></i>
+              <i class="fas" {...{'x-bind:class': "copied === 'surge' ? 'fa-check' : 'fa-copy'"}}></i>
             </button >
           </div >
         </div >

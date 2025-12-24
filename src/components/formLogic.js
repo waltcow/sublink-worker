@@ -43,10 +43,7 @@ export const formLogicFn = (t) => {
             commonEmojis: [
                 '🏢', '🎮', '📺', '🤖', '☁️', '🌐', '🚀', '🔓', '🔒', '🛡️', 
                 '⚙️', '📍', '🗺️', '🚩', '🏁', '📶', '📡', '🔋', '🔌', '💻', 
-                '📱', '🛠️', '⚖️', '🛸', '🌍', '🌎', '🌏', '🌑', '🌕', '🌓', 
-                '🌗', '🎬', '🎧', '🎤', '🎨', '🎭', '🎫', '🇺🇸', '🇭🇰', '🇯🇵', 
-                '🇸🇬', '🇰🇷', '🇬🇧', '🇩🇪', '🇫🇷', '🇷🇺', '🇨🇳', '🇹🇼', '🇨🇦', '🇦🇺', 
-                '🇳🇱', '🇮🇳', '🇧🇷', '🇲🇽', '🇮🇹', '🇪🇸', '🇹🇷'
+                '🎬', '🎧', '🎤', '🎨', '🎭', '🎫'
             ],
             // These will be populated from window.APP_TRANSLATIONS
             processingText: '',
@@ -72,6 +69,15 @@ export const formLogicFn = (t) => {
                 // Load saved data
                 this.input = localStorage.getItem('inputTextarea') || '';
                 this.showAdvanced = localStorage.getItem('advancedToggle') === 'true';
+
+                // Event listeners for profile management
+                window.addEventListener('load-profile', (e) => this.loadProfileData(e.detail));
+                window.addEventListener('request-save-profile', () => this.requestSaveProfile());
+
+                // Event listeners for config management
+                window.addEventListener('export-config', () => this.exportConfig());
+                window.addEventListener('import-config', () => this.$refs.fileInput.click());
+
                 this.groupByCountry = localStorage.getItem('groupByCountry') === 'true';
                 this.enableClashUI = localStorage.getItem('enableClashUI') === 'true';
                 this.externalController = localStorage.getItem('externalController') || '';
@@ -157,6 +163,78 @@ export const formLogicFn = (t) => {
                 this.$watch('customShortCode', val => localStorage.setItem('customShortCode', val));
                 this.$watch('accordionSections', val => localStorage.setItem('accordionSections', JSON.stringify(val)), { deep: true });
                 this.$watch('keywordGroups', val => localStorage.setItem('keywordGroups', JSON.stringify(val)), { deep: true });
+            },
+
+            requestSaveProfile() {
+                const name = prompt(window.APP_TRANSLATIONS.profileNamePlaceholder || 'Profile Name');
+                if (!name || !name.trim()) return;
+
+                const customRulesInput = document.querySelector('input[name="customRules"]');
+                const customRules = customRulesInput && customRulesInput.value ? JSON.parse(customRulesInput.value) : [];
+
+                const profile = {
+                    name: name.trim(),
+                    timestamp: new Date().toISOString(),
+                    settings: {
+                        input: this.input,
+                        selectedRules: this.selectedRules,
+                        selectedPredefinedRule: this.selectedPredefinedRule,
+                        customRules: customRules,
+                        groupByCountry: this.groupByCountry,
+                        enableClashUI: this.enableClashUI,
+                        externalController: this.externalController,
+                        externalUiDownloadUrl: this.externalUiDownloadUrl,
+                        configType: this.configType,
+                        configEditor: this.configEditor,
+                        customUA: this.customUA,
+                        keywordGroups: this.keywordGroups,
+                        customShortCode: this.customShortCode,
+                        accordionSections: this.accordionSections
+                    }
+                };
+
+                const index = Alpine.store('profiles').list.findIndex(p => p.name === profile.name);
+                if (index >= 0) {
+                    if (!confirm((window.APP_TRANSLATIONS.overwriteProfile || 'Overwrite existing profile?') + ` "${profile.name}"`)) {
+                        return;
+                    }
+                }
+                
+                Alpine.store('profiles').add(profile);
+                alert(window.APP_TRANSLATIONS.profileSaved || 'Profile saved successfully');
+            },
+
+            loadProfileData(profile) {
+                if (!profile) return;
+                
+                // Confirm load
+                if (!confirm((window.APP_TRANSLATIONS.loadProfileConfirm || 'Load this profile? Unsaved changes will be lost.') + `\n"${profile.name}"`)) {
+                    return;
+                }
+
+                const settings = profile.settings;
+                
+                if (settings.input !== undefined) this.input = settings.input;
+                if (settings.selectedRules !== undefined) this.selectedRules = settings.selectedRules;
+                if (settings.selectedPredefinedRule !== undefined) this.selectedPredefinedRule = settings.selectedPredefinedRule;
+                if (settings.groupByCountry !== undefined) this.groupByCountry = settings.groupByCountry;
+                if (settings.enableClashUI !== undefined) this.enableClashUI = settings.enableClashUI;
+                if (settings.externalController !== undefined) this.externalController = settings.externalController;
+                if (settings.externalUiDownloadUrl !== undefined) this.externalUiDownloadUrl = settings.externalUiDownloadUrl;
+                if (settings.configType !== undefined) this.configType = settings.configType;
+                if (settings.configEditor !== undefined) this.configEditor = settings.configEditor;
+                if (settings.customUA !== undefined) this.customUA = settings.customUA;
+                if (settings.keywordGroups !== undefined) this.keywordGroups = settings.keywordGroups;
+                if (settings.customShortCode !== undefined) this.customShortCode = settings.customShortCode;
+                if (settings.accordionSections !== undefined) this.accordionSections = settings.accordionSections;
+
+                if (settings.customRules !== undefined && Array.isArray(settings.customRules)) {
+                     setTimeout(() => {
+                        window.dispatchEvent(new CustomEvent('restore-custom-rules', {
+                            detail: { rules: settings.customRules }
+                        }));
+                     }, 50);
+                }
             },
 
             toggleAccordion(section) {
