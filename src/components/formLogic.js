@@ -19,6 +19,7 @@ export const formLogicFn = (t) => {
             enableClashUI: false,
             externalController: '',
             externalUiDownloadUrl: '',
+            ruleProviderFormat: 'yaml',
             configType: 'singbox',
             configEditor: '',
             savingConfig: false,
@@ -87,6 +88,7 @@ export const formLogicFn = (t) => {
                 this.enableClashUI = localStorage.getItem('enableClashUI') === 'true';
                 this.externalController = localStorage.getItem('externalController') || '';
                 this.externalUiDownloadUrl = localStorage.getItem('externalUiDownloadUrl') || '';
+                this.ruleProviderFormat = localStorage.getItem('ruleProviderFormat') || 'yaml';
                 this.configEditor = localStorage.getItem('configEditor') || '';
                 this.configType = localStorage.getItem('configType') || 'singbox';
                 this.customShortCode = localStorage.getItem('customShortCode') || '';
@@ -153,6 +155,7 @@ export const formLogicFn = (t) => {
                 this.$watch('enableClashUI', val => localStorage.setItem('enableClashUI', val));
                 this.$watch('externalController', val => localStorage.setItem('externalController', val));
                 this.$watch('externalUiDownloadUrl', val => localStorage.setItem('externalUiDownloadUrl', val));
+                this.$watch('ruleProviderFormat', val => localStorage.setItem('ruleProviderFormat', val));
                 this.$watch('configEditor', val => {
                     localStorage.setItem('configEditor', val);
                     this.resetConfigValidation();
@@ -187,6 +190,7 @@ export const formLogicFn = (t) => {
                         enableClashUI: this.enableClashUI,
                         externalController: this.externalController,
                         externalUiDownloadUrl: this.externalUiDownloadUrl,
+                        ruleProviderFormat: this.ruleProviderFormat,
                         configType: this.configType,
                         configEditor: this.configEditor,
                         keywordGroups: this.keywordGroups,
@@ -223,6 +227,7 @@ export const formLogicFn = (t) => {
                 if (settings.enableClashUI !== undefined) this.enableClashUI = settings.enableClashUI;
                 if (settings.externalController !== undefined) this.externalController = settings.externalController;
                 if (settings.externalUiDownloadUrl !== undefined) this.externalUiDownloadUrl = settings.externalUiDownloadUrl;
+                if (settings.ruleProviderFormat !== undefined) this.ruleProviderFormat = settings.ruleProviderFormat;
                 if (settings.configType !== undefined) this.configType = settings.configType;
                 if (settings.configEditor !== undefined) this.configEditor = settings.configEditor;
                 if (settings.keywordGroups !== undefined) this.keywordGroups = settings.keywordGroups;
@@ -360,21 +365,22 @@ export const formLogicFn = (t) => {
                     this.selectedRules = [];
                     this.selectedPredefinedRule = 'balanced';
                     this.applyPredefinedRule();
-                    this.groupByCountry = false;
-                    this.enableClashUI = false;
-                    this.externalController = '';
-                    this.externalUiDownloadUrl = '';
-                    this.keywordGroups = [];
-                    this.generatedLinks = null;
-                    this.shortenedLinks = null;
-                    this.customShortCode = '';
-                    this.configEditor = '';
+                this.groupByCountry = false;
+                this.enableClashUI = false;
+                this.externalController = '';
+                this.externalUiDownloadUrl = '';
+                this.ruleProviderFormat = 'yaml';
+                this.keywordGroups = [];
+                this.generatedLinks = null;
+                this.shortenedLinks = null;
+                this.customShortCode = '';
+                this.configEditor = '';
                     
                     // Clear all related localStorage items
                     const keysToRemove = [
                         'inputTextarea', 'advancedToggle', 'groupByCountry', 
                         'enableClashUI', 'externalController', 'externalUiDownloadUrl',
-                        'configEditor', 'configType', 'customShortCode',
+                        'ruleProviderFormat', 'configEditor', 'configType', 'customShortCode',
                         'accordionSections', 'keywordGroups', 'selectedRules', 
                         'selectedPredefinedRule', 'customRules'
                     ];
@@ -446,6 +452,7 @@ export const formLogicFn = (t) => {
                         enableClashUI: this.enableClashUI,
                         externalController: this.externalController,
                         externalUiDownloadUrl: this.externalUiDownloadUrl,
+                        ruleProviderFormat: this.ruleProviderFormat,
                         configType: this.configType,
                         configEditor: this.configEditor,
                         keywordGroups: this.keywordGroups,
@@ -492,6 +499,7 @@ export const formLogicFn = (t) => {
                         if (settings.enableClashUI !== undefined) this.enableClashUI = settings.enableClashUI;
                         if (settings.externalController !== undefined) this.externalController = settings.externalController;
                         if (settings.externalUiDownloadUrl !== undefined) this.externalUiDownloadUrl = settings.externalUiDownloadUrl;
+                        if (settings.ruleProviderFormat !== undefined) this.ruleProviderFormat = settings.ruleProviderFormat;
                         if (settings.configType !== undefined) this.configType = settings.configType;
                         if (settings.configEditor !== undefined) this.configEditor = settings.configEditor;
                         if (settings.keywordGroups !== undefined) this.keywordGroups = settings.keywordGroups;
@@ -546,6 +554,7 @@ export const formLogicFn = (t) => {
                     if (this.externalController) params.append('external_controller', this.externalController);
                     if (this.externalUiDownloadUrl) params.append('external_ui_download_url', this.externalUiDownloadUrl);
                     if (this.keywordGroups && this.keywordGroups.length > 0) params.append('keyword_groups', JSON.stringify(this.keywordGroups));
+                    if (this.ruleProviderFormat) params.append('rule_provider_format', this.ruleProviderFormat);
 
                     // Add configId if present in URL
                     const urlParams = new URLSearchParams(window.location.search);
@@ -798,6 +807,11 @@ export const formLogicFn = (t) => {
                     this.externalUiDownloadUrl = externalUiDownloadUrl;
                 }
 
+                const ruleProviderFormat = params.get('rule_provider_format');
+                if (ruleProviderFormat) {
+                    this.ruleProviderFormat = ruleProviderFormat;
+                }
+
                 const configId = params.get('configId');
                 if (configId) {
                     this.currentConfigId = configId;
@@ -806,7 +820,7 @@ export const formLogicFn = (t) => {
 
                 // Expand advanced options if any advanced settings are present
                 if (selectedRules || customRules || this.groupByCountry || this.enableClashUI ||
-                    externalController || externalUiDownloadUrl || configId) {
+                    externalController || externalUiDownloadUrl || ruleProviderFormat || configId) {
                     this.showAdvanced = true;
                 }
             }

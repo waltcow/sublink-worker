@@ -7,7 +7,7 @@ import { buildSelectorMembers, buildNodeSelectMembers, uniqueNames } from './hel
 import { emitClashRules, sanitizeClashProxyGroups } from './helpers/clashConfigUtils.js';
 
 export class ClashConfigBuilder extends BaseConfigBuilder {
-    constructor(inputString, selectedRules, customRules, baseConfig, lang, groupByCountry = false, enableClashUI = false, externalController, externalUiDownloadUrl, keywordGroups = [], enableProviders = false, defaultExclude = [], kv = null, subscriptionCacheTtl = 300, subscriptionTimeout = 10000, subscriptionMaxRetries = 3) {
+    constructor(inputString, selectedRules, customRules, baseConfig, lang, groupByCountry = false, enableClashUI = false, externalController, externalUiDownloadUrl, keywordGroups = [], enableProviders = false, defaultExclude = [], ruleProviderFormat = 'yaml', kv = null, subscriptionCacheTtl = 300, subscriptionTimeout = 10000, subscriptionMaxRetries = 3) {
         if (!baseConfig) {
             baseConfig = CLASH_CONFIG;
         }
@@ -21,6 +21,7 @@ export class ClashConfigBuilder extends BaseConfigBuilder {
         this.externalController = externalController;
         this.externalUiDownloadUrl = externalUiDownloadUrl;
         this.enableProviders = enableProviders;
+        this.ruleProviderFormat = ruleProviderFormat || 'yaml';
     }
 
     /**
@@ -484,7 +485,7 @@ export class ClashConfigBuilder extends BaseConfigBuilder {
 
     formatConfig() {
         const rules = this.generateRules();
-        const { site_rule_providers, ip_rule_providers } = generateClashRuleSets(this.selectedRules, this.customRules);
+        const { site_rule_providers, ip_rule_providers } = generateClashRuleSets(this.selectedRules, this.customRules, this.ruleProviderFormat);
         this.config['rule-providers'] = {
             ...site_rule_providers,
             ...ip_rule_providers

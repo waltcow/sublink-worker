@@ -3,7 +3,7 @@
  * Functions for generating rules and rule sets
  */
 
-import { UNIFIED_RULES, PREDEFINED_RULE_SETS, SITE_RULE_SETS, IP_RULE_SETS, CLASH_SITE_RULE_SETS, CLASH_IP_RULE_SETS } from './rules.js';
+import { UNIFIED_RULES, PREDEFINED_RULE_SETS, SITE_RULE_SETS, IP_RULE_SETS } from './rules.js';
 import { SITE_RULE_SET_BASE_URL, IP_RULE_SET_BASE_URL, CLASH_SITE_RULE_SET_BASE_URL, CLASH_IP_RULE_SET_BASE_URL } from './ruleUrls.js';
 
 // Helper function to get outbounds based on selected rule names
@@ -132,8 +132,22 @@ export function generateRuleSets(selectedRules = [], customRules = []) {
 	return { site_rule_sets, ip_rule_sets };
 }
 
-// Generate rule sets for Clash using .mrs format
-export function generateClashRuleSets(selectedRules = [], customRules = []) {
+function normalizeClashRuleProviderFormat(raw) {
+	const normalized = typeof raw === 'string' ? raw.trim().toLowerCase() : '';
+	if (normalized === 'mrs') {
+		return { format: 'mrs', extension: 'mrs' };
+	}
+	if (normalized === 'text' || normalized === 'list') {
+		return { format: 'text', extension: 'list' };
+	}
+	if (normalized === 'yml' || normalized === 'yaml') {
+		return { format: 'yaml', extension: 'yaml' };
+	}
+	return { format: 'yaml', extension: 'yaml' };
+}
+
+// Generate rule sets for Clash using rule-provider formats
+export function generateClashRuleSets(selectedRules = [], customRules = [], ruleProviderFormat = 'yaml') {
 	if (typeof selectedRules === 'string' && PREDEFINED_RULE_SETS[selectedRules]) {
 		selectedRules = PREDEFINED_RULE_SETS[selectedRules];
 	}
@@ -156,14 +170,15 @@ export function generateClashRuleSets(selectedRules = [], customRules = []) {
 
 	const site_rule_providers = {};
 	const ip_rule_providers = {};
+	const { format, extension } = normalizeClashRuleProviderFormat(ruleProviderFormat);
 
 	Array.from(siteRuleSets).forEach(rule => {
 		site_rule_providers[rule] = {
 			type: 'http',
-			format: 'mrs',
+			format,
 			behavior: 'domain',
-			url: `${CLASH_SITE_RULE_SET_BASE_URL}${CLASH_SITE_RULE_SETS[rule]}`,
-			path: `./ruleset/${CLASH_SITE_RULE_SETS[rule]}`,
+			url: `${CLASH_SITE_RULE_SET_BASE_URL}${rule}.${extension}`,
+			path: `./ruleset/${rule}.${extension}`,
 			interval: 86400
 		};
 	});
@@ -171,10 +186,10 @@ export function generateClashRuleSets(selectedRules = [], customRules = []) {
 	Array.from(ipRuleSets).forEach(rule => {
 		ip_rule_providers[rule] = {
 			type: 'http',
-			format: 'mrs',
+			format,
 			behavior: 'ipcidr',
-			url: `${CLASH_IP_RULE_SET_BASE_URL}${CLASH_IP_RULE_SETS[rule]}`,
-			path: `./ruleset/${CLASH_IP_RULE_SETS[rule]}`,
+			url: `${CLASH_IP_RULE_SET_BASE_URL}${rule}.${extension}`,
+			path: `./ruleset/${rule}.${extension}`,
 			interval: 86400
 		};
 	});
@@ -183,10 +198,10 @@ export function generateClashRuleSets(selectedRules = [], customRules = []) {
 	if (!selectedRules.includes('Non-China')) {
 		site_rule_providers['geolocation-!cn'] = {
 			type: 'http',
-			format: 'mrs',
+			format,
 			behavior: 'domain',
-			url: `${CLASH_SITE_RULE_SET_BASE_URL}geolocation-!cn.mrs`,
-			path: './ruleset/geolocation-!cn.mrs',
+			url: `${CLASH_SITE_RULE_SET_BASE_URL}geolocation-!cn.${extension}`,
+			path: `./ruleset/geolocation-!cn.${extension}`,
 			interval: 86400
 		};
 	}
@@ -199,10 +214,10 @@ export function generateClashRuleSets(selectedRules = [], customRules = []) {
 					const site_trimmed = site.trim();
 					site_rule_providers[site_trimmed] = {
 						type: 'http',
-						format: 'mrs',
+						format,
 						behavior: 'domain',
-						url: `${CLASH_SITE_RULE_SET_BASE_URL}${site_trimmed}.mrs`,
-						path: `./ruleset/${site_trimmed}.mrs`,
+						url: `${CLASH_SITE_RULE_SET_BASE_URL}${site_trimmed}.${extension}`,
+						path: `./ruleset/${site_trimmed}.${extension}`,
 						interval: 86400
 					};
 				});
@@ -212,10 +227,10 @@ export function generateClashRuleSets(selectedRules = [], customRules = []) {
 					const ip_trimmed = ip.trim();
 					ip_rule_providers[ip_trimmed] = {
 						type: 'http',
-						format: 'mrs',
+						format,
 						behavior: 'ipcidr',
-						url: `${CLASH_IP_RULE_SET_BASE_URL}${ip_trimmed}.mrs`,
-						path: `./ruleset/${ip_trimmed}.mrs`,
+						url: `${CLASH_IP_RULE_SET_BASE_URL}${ip_trimmed}.${extension}`,
+						path: `./ruleset/${ip_trimmed}.${extension}`,
 						interval: 86400
 					};
 				});

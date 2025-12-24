@@ -86,6 +86,7 @@ export function createApp(bindings = {}) {
         const externalController = queryGetter('external_controller');
         const externalUiDownloadUrl = queryGetter('external_ui_download_url');
         const enableProviders = parseBooleanFlag(queryGetter('enable_providers'));
+        const ruleProviderFormat = queryGetter('rule_provider_format');
         
         const defaultExcludeRaw = queryGetter('default_exclude');
         const defaultExclude = defaultExcludeRaw
@@ -146,6 +147,7 @@ export function createApp(bindings = {}) {
                 keywordGroups,
                 enableProviders,
                 defaultExclude,
+                ruleProviderFormat,
                 runtime.kv,
                 runtime.config.subscriptionCacheTtl
             );

@@ -223,6 +223,28 @@ export const Form = (props) => {
                 </div>
               </div>
 
+              <div
+                x-show="configType === 'clash'"
+                {...{
+                  'x-transition:enter': 'transition ease-out duration-200',
+                  'x-transition:enter-start': 'opacity-0 transform -translate-y-2',
+                  'x-transition:enter-end': 'opacity-100 transform translate-y-0',
+                  'x-transition:leave': 'transition ease-in duration-150',
+                  'x-transition:leave-start': 'opacity-100 transform translate-y-0',
+                  'x-transition:leave-end': 'opacity-0 transform -translate-y-2'
+                }}
+                class="pt-2"
+              >
+                <label class="flex items-center justify-between p-3 rounded-lg bg-gray-50 dark:bg-gray-700/30 hover:bg-gray-100 dark:hover:bg-gray-700/50 transition-colors cursor-pointer">
+                  <span class="font-medium text-gray-700 dark:text-gray-300">{t('ruleProviderFormat')}</span>
+                  <select x-model="ruleProviderFormat" class="px-3 py-1.5 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-700 text-sm font-medium text-gray-700 dark:text-gray-200 focus:ring-2 focus:ring-primary-500 focus:border-transparent">
+                    <option value="yaml">{t('ruleProviderFormatYaml')}</option>
+                    <option value="text">{t('ruleProviderFormatText')}</option>
+                    <option value="mrs">{t('ruleProviderFormatMrs')}</option>
+                  </select>
+                </label>
+              </div>
+
           </div>
           </div>
 
