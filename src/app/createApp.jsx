@@ -35,6 +35,19 @@ export function createApp(bindings = {}) {
     };
 
     const app = new Hono();
+    const serveAssetOrFallback = async (c, fallbackFactory) => {
+        if (runtime.assetFetcher) {
+            try {
+                const response = await runtime.assetFetcher(c.req.raw);
+                if (response && (response.ok || response.status === 304)) {
+                    return response;
+                }
+            } catch (error) {
+                runtime.logger.warn('Asset fetch failed', error);
+            }
+        }
+        return fallbackFactory();
+    };
 
     // Helper: Generate Config Response
     const generateConfigResponse = async (c, type, queryGetter) => {
@@ -365,34 +378,26 @@ export function createApp(bindings = {}) {
     });
 
     app.get('/favicon.ico', async (c) => {
-        if (runtime.assetFetcher) {
-            try {
-                return await runtime.assetFetcher(c.req.raw);
-            } catch (error) {
-                runtime.logger.warn('Asset fetch failed', error);
-            }
-        }
-        return new Response(faviconBytes, {
-            headers: {
-                'content-type': 'image/x-icon',
-                'cache-control': 'public, max-age=31536000, immutable'
-            }
-        });
+        return serveAssetOrFallback(
+            c,
+            () => new Response(faviconBytes, {
+                headers: {
+                    'content-type': 'image/x-icon',
+                    'cache-control': 'public, max-age=31536000, immutable'
+                }
+            })
+        );
     });
     app.get('/favicon.svg', async (c) => {
-        if (runtime.assetFetcher) {
-            try {
-                return await runtime.assetFetcher(c.req.raw);
-            } catch (error) {
-                runtime.logger.warn('Asset fetch failed', error);
-            }
-        }
-        return new Response(FAVICON_SVG, {
-            headers: {
-                'content-type': 'image/svg+xml',
-                'cache-control': 'public, max-age=31536000, immutable'
-            }
-        });
+        return serveAssetOrFallback(
+            c,
+            () => new Response(FAVICON_SVG, {
+                headers: {
+                    'content-type': 'image/svg+xml',
+                    'cache-control': 'public, max-age=31536000, immutable'
+                }
+            })
+        );
     });
 
     return app;

@@ -535,6 +535,6 @@ export class ClashConfigBuilder extends BaseConfigBuilder {
             delete this.config['secret'];
         }
 
-        return yaml.dump(this.config);
+        return yaml.dump(this.config, { lineWidth: -1 });
     }
 }
