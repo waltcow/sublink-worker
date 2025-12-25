@@ -178,7 +178,7 @@ export function generateClashRuleSets(selectedRules = [], customRules = [], rule
 			format,
 			behavior: 'domain',
 			url: `${CLASH_SITE_RULE_SET_BASE_URL}${rule}.${extension}`,
-			path: `./ruleset/${rule}.${extension}`,
+			path: `./${rule}.${extension}`,
 			interval: 86400
 		};
 	});
@@ -189,7 +189,7 @@ export function generateClashRuleSets(selectedRules = [], customRules = [], rule
 			format,
 			behavior: 'ipcidr',
 			url: `${CLASH_IP_RULE_SET_BASE_URL}${rule}.${extension}`,
-			path: `./ruleset/${rule}.${extension}`,
+			path: `./${rule}.${extension}`,
 			interval: 86400
 		};
 	});
@@ -201,7 +201,7 @@ export function generateClashRuleSets(selectedRules = [], customRules = [], rule
 			format,
 			behavior: 'domain',
 			url: `${CLASH_SITE_RULE_SET_BASE_URL}geolocation-!cn.${extension}`,
-			path: `./ruleset/geolocation-!cn.${extension}`,
+			path: `./geolocation-!cn.${extension}`,
 			interval: 86400
 		};
 	}
@@ -217,7 +217,7 @@ export function generateClashRuleSets(selectedRules = [], customRules = [], rule
 						format,
 						behavior: 'domain',
 						url: `${CLASH_SITE_RULE_SET_BASE_URL}${site_trimmed}.${extension}`,
-						path: `./ruleset/${site_trimmed}.${extension}`,
+						path: `./${site_trimmed}.${extension}`,
 						interval: 86400
 					};
 				});
@@ -230,7 +230,7 @@ export function generateClashRuleSets(selectedRules = [], customRules = [], rule
 						format,
 						behavior: 'ipcidr',
 						url: `${CLASH_IP_RULE_SET_BASE_URL}${ip_trimmed}.${extension}`,
-						path: `./ruleset/${ip_trimmed}.${extension}`,
+						path: `./${ip_trimmed}.${extension}`,
 						interval: 86400
 					};
 				});
