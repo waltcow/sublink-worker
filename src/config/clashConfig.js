@@ -4,6 +4,8 @@
  */
 
 export const CLASH_CONFIG = {
+	'proxies': [],
+	'proxy-groups': [],
 	'port': 7890,
 	'socks-port': 7891,
 	'allow-lan': false,
@@ -45,7 +47,5 @@ export const CLASH_CONFIG = {
 				'https://dns.google/dns-query'
 			]
 		}
-	},
-	'proxies': [],
-	'proxy-groups': []
+	}
 };
