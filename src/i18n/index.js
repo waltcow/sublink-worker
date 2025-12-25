@@ -128,6 +128,7 @@ export const translations = {
       'Cloud Services': '☁️ 云服务',
       'Non-China': '🌐 非中国',
       'Manual Switch': '🖐️ 手动切换',
+      'Manual Switch 2': '🖐️ 手动切换2',
       'GLOBAL': 'GLOBAL'
     },
     generalSettings: '通用设置',
@@ -307,6 +308,7 @@ export const translations = {
       'Cloud Services': '☁️ Cloud Services',
       'Non-China': '🌐 Non-China',
       'Manual Switch': '🖐️ Manual Switch',
+      'Manual Switch 2': '🖐️ Manual Switch 2',
       'GLOBAL': 'GLOBAL'
     },
     generalSettings: 'General Settings',

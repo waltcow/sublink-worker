@@ -3,7 +3,7 @@ import { SING_BOX_CONFIG, generateRuleSets, generateRules, getOutbounds, PREDEFI
 import { BaseConfigBuilder } from './BaseConfigBuilder.js';
 import { deepCopy, groupProxiesByCountry, groupProxiesByKeyword } from '../utils.js';
 import { addProxyWithDedup } from './helpers/proxyHelpers.js';
-import { buildSelectorMembers as buildSelectorMemberList, buildNodeSelectMembers, uniqueNames } from './helpers/groupBuilder.js';
+import { buildSelectorMembers as buildSelectorMemberList, buildNodeSelectMembers, uniqueNames, moveDirectToFront, moveRejectToFront } from './helpers/groupBuilder.js';
 
 export class SingboxConfigBuilder extends BaseConfigBuilder {
     constructor(inputString, selectedRules, customRules, baseConfig, lang, groupByCountry = false, enableClashUI = false, externalController, externalUiDownloadUrl, singboxVersion = '1.12', keywordGroups = [], enableProviders = false, defaultExclude = [], kv = null, subscriptionCacheTtl = 300, subscriptionTimeout = 10000, subscriptionMaxRetries = 3) {
@@ -13,7 +13,7 @@ export class SingboxConfigBuilder extends BaseConfigBuilder {
         this.selectedRules = selectedRules;
         this.customRules = customRules;
         this.countryGroupNames = [];
-        this.manualGroupName = null;
+        this.manualGroupNames = [];
         this.enableClashUI = enableClashUI;
         this.externalController = externalController;
         this.externalUiDownloadUrl = externalUiDownloadUrl;
@@ -152,7 +152,7 @@ export class SingboxConfigBuilder extends BaseConfigBuilder {
             proxyList,
             translator: this.t,
             groupByCountry: this.groupByCountry,
-            manualGroupName: this.manualGroupName,
+            manualGroupNames: this.manualGroupNames,
             countryGroupNames: this.countryGroupNames
         });
 
@@ -176,7 +176,7 @@ export class SingboxConfigBuilder extends BaseConfigBuilder {
             proxyList,
             translator: this.t,
             groupByCountry: this.groupByCountry,
-            manualGroupName: this.manualGroupName,
+            manualGroupNames: this.manualGroupNames,
             countryGroupNames: this.countryGroupNames,
             keywordGroupNames: includeKeywordGroups ? (this.keywordGroupNames || []) : [],
             filteredProxyNames: this.filteredProxyNames || new Set()
@@ -187,6 +187,12 @@ export class SingboxConfigBuilder extends BaseConfigBuilder {
         outbounds.forEach(outbound => {
             if (outbound !== this.t('outboundNames.Node Select')) {
                 const selectorMembers = this.buildSelectorMembers(proxyList);
+                let orderedMembers = selectorMembers;
+                if (outbound === 'Location:CN') {
+                    orderedMembers = moveDirectToFront(selectorMembers);
+                } else if (outbound === 'Ad Block') {
+                    orderedMembers = moveRejectToFront(selectorMembers);
+                }
                 const tag = this.t(`outboundNames.${outbound}`);
                 if (this.hasOutboundTag(tag)) {
                     return;
@@ -194,7 +200,7 @@ export class SingboxConfigBuilder extends BaseConfigBuilder {
                 this.config.outbounds.push({
                     type: "selector",
                     tag,
-                    outbounds: selectorMembers
+                    outbounds: orderedMembers
                 });
             }
         });
@@ -234,18 +240,25 @@ export class SingboxConfigBuilder extends BaseConfigBuilder {
         const existingTags = new Set((this.config.outbounds || []).map(o => normalize(o?.tag)).filter(Boolean));
 
         const manualProxyNames = proxies.map(p => p?.tag).filter(Boolean);
-        const manualGroupName = manualProxyNames.length > 0 ? this.t('outboundNames.Manual Switch') : null;
-        if (manualGroupName) {
-            const manualNorm = normalize(manualGroupName);
+        const manualGroupNames = manualProxyNames.length > 0
+            ? [this.t('outboundNames.Manual Switch'), this.t('outboundNames.Manual Switch 2')]
+            : [];
+        const manualGroupNamesUnique = [];
+        const manualGroupSeen = new Set();
+        manualGroupNames.forEach(name => {
+            const manualNorm = normalize(name);
+            if (!manualNorm || manualGroupSeen.has(manualNorm)) return;
+            manualGroupSeen.add(manualNorm);
+            manualGroupNamesUnique.push(name);
             if (!existingTags.has(manualNorm)) {
                 this.config.outbounds.push({
                     type: 'selector',
-                    tag: manualGroupName,
+                    tag: name,
                     outbounds: manualProxyNames
                 });
                 existingTags.add(manualNorm);
             }
-        }
+        });
 
         const countries = Object.keys(countryGroups).sort((a, b) => a.localeCompare(b));
         const countryGroupNames = [];
@@ -275,14 +288,14 @@ export class SingboxConfigBuilder extends BaseConfigBuilder {
                 proxyList: [],
                 translator: this.t,
                 groupByCountry: true,
-                manualGroupName,
+                manualGroupNames: manualGroupNamesUnique,
                 countryGroupNames
             });
             nodeSelectGroup.outbounds = rebuilt;
         }
 
         this.countryGroupNames = countryGroupNames;
-        this.manualGroupName = manualGroupName;
+        this.manualGroupNames = manualGroupNamesUnique;
     }
 
     addKeywordGroups() {

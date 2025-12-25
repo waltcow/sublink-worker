@@ -21,15 +21,41 @@ export function withDirectReject(options = []) {
     ]);
 }
 
-export function buildNodeSelectMembers({ proxyList = [], translator, groupByCountry = false, manualGroupName, countryGroupNames = [] }) {
+export function moveItemToFront(options = [], item) {
+    if (!Array.isArray(options)) {
+        return [];
+    }
+    const targetIndex = options.indexOf(item);
+    if (targetIndex <= 0) {
+        return options;
+    }
+    return [item, ...options.filter(option => option !== item)];
+}
+
+export function moveDirectToFront(options = []) {
+    return moveItemToFront(options, 'DIRECT');
+}
+
+export function moveRejectToFront(options = []) {
+    return moveItemToFront(options, 'REJECT');
+}
+
+export function buildNodeSelectMembers({
+    proxyList = [],
+    translator,
+    groupByCountry = false,
+    manualGroupNames,
+    countryGroupNames = []
+}) {
     if (!translator) {
         throw new Error('buildNodeSelectMembers requires a translator function');
     }
+    const manualNames = Array.isArray(manualGroupNames) ? manualGroupNames : [];
     const autoName = translator('outboundNames.Auto Select');
     const base = groupByCountry
         ? [
             autoName,
-            ...(manualGroupName ? [manualGroupName] : []),
+            ...manualNames,
             ...countryGroupNames
         ]
         : [
@@ -43,7 +69,7 @@ export function buildSelectorMembers({
     proxyList = [],
     translator,
     groupByCountry = false,
-    manualGroupName,
+    manualGroupNames,
     countryGroupNames = [],
     keywordGroupNames = [],
     filteredProxyNames = new Set()
@@ -55,11 +81,12 @@ export function buildSelectorMembers({
     // Filter out proxies that have been grouped by keywords
     const unfilteredProxyList = proxyList.filter(proxyName => !filteredProxyNames.has(proxyName));
     
+    const manualNames = Array.isArray(manualGroupNames) ? manualGroupNames : [];
     const base = groupByCountry
         ? [
             translator('outboundNames.Node Select'),
             translator('outboundNames.Auto Select'),
-            ...(manualGroupName ? [manualGroupName] : []),
+            ...manualNames,
             ...countryGroupNames,
             ...keywordGroupNames
         ]
