@@ -105,7 +105,12 @@ export function createApp(bindings = {}) {
         const defaultExclude = defaultExcludeRaw
             ? parseDefaultExclude(defaultExcludeRaw)
             : runtime.config.defaultExclude;
-            
+
+        const includeCountriesRaw = queryGetter('include_countries');
+        const includeCountries = includeCountriesRaw
+            ? parseDefaultExclude(includeCountriesRaw)
+            : [];
+
         const configId = queryGetter('configId');
         const lang = c.get('lang'); // Use context lang
 
@@ -139,6 +144,7 @@ export function createApp(bindings = {}) {
                 keywordGroups,
                 enableProviders,
                 defaultExclude,
+                includeCountries,
                 runtime.kv,
                 runtime.config.subscriptionCacheTtl
             );
@@ -160,6 +166,7 @@ export function createApp(bindings = {}) {
                 keywordGroups,
                 enableProviders,
                 defaultExclude,
+                includeCountries,
                 ruleProviderFormat,
                 runtime.kv,
                 runtime.config.subscriptionCacheTtl
@@ -180,6 +187,7 @@ export function createApp(bindings = {}) {
                 groupByCountry,
                 keywordGroups,
                 defaultExclude,
+                includeCountries,
                 runtime.kv,
                 runtime.config.subscriptionCacheTtl
             );
@@ -198,6 +206,7 @@ export function createApp(bindings = {}) {
                 baseConfig,
                 lang,
                 defaultExclude,
+                includeCountries,
                 runtime.kv,
                 runtime.config.subscriptionCacheTtl
             );
@@ -253,7 +262,7 @@ export function createApp(bindings = {}) {
                                         {subtitle}
                                     </p>
                                 </div>
-                                <Form t={t} />
+                                <Form t={t} lang={lang} />
                             </div>
                         </div>
                     </main>

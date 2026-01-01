@@ -5,13 +5,14 @@ import { deepCopy, groupProxiesByCountry, groupProxiesByKeyword } from '../utils
 import { addProxyWithDedup } from './helpers/proxyHelpers.js';
 import { buildSelectorMembers, buildNodeSelectMembers, uniqueNames, moveDirectToFront, moveRejectToFront } from './helpers/groupBuilder.js';
 import { emitClashRules, sanitizeClashProxyGroups } from './helpers/clashConfigUtils.js';
+import { COUNTRIES } from '../constants.js';
 
 export class ClashConfigBuilder extends BaseConfigBuilder {
-    constructor(inputString, selectedRules, customRules, baseConfig, lang, groupByCountry = false, enableClashUI = false, externalController, externalUiDownloadUrl, keywordGroups = [], enableProviders = false, defaultExclude = [], ruleProviderFormat = 'yaml', kv = null, subscriptionCacheTtl = 300, subscriptionTimeout = 10000, subscriptionMaxRetries = 3) {
+    constructor(inputString, selectedRules, customRules, baseConfig, lang, groupByCountry = false, enableClashUI = false, externalController, externalUiDownloadUrl, keywordGroups = [], enableProviders = false, defaultExclude = [], includeCountries = [], ruleProviderFormat = 'yaml', kv = null, subscriptionCacheTtl = 300, subscriptionTimeout = 10000, subscriptionMaxRetries = 3) {
         if (!baseConfig) {
             baseConfig = CLASH_CONFIG;
         }
-        super(inputString, baseConfig, lang, groupByCountry, keywordGroups, defaultExclude, kv, subscriptionCacheTtl, subscriptionTimeout, subscriptionMaxRetries);
+        super(inputString, baseConfig, lang, groupByCountry, keywordGroups, defaultExclude, includeCountries, kv, subscriptionCacheTtl, subscriptionTimeout, subscriptionMaxRetries);
         this.selectedRules = selectedRules;
         this.customRules = customRules;
         this.countryGroupNames = [];
@@ -407,7 +408,20 @@ export class ClashConfigBuilder extends BaseConfigBuilder {
             }
         });
 
-        const countries = Object.keys(countryGroups).sort((a, b) => a.localeCompare(b));
+        // Sort countries by the order defined in COUNTRIES constant
+        // groupProxiesByCountry uses country English names as keys, so we build the order from COUNTRIES values
+        const countryNameOrder = Object.values(COUNTRIES).map(c => c.name);
+        const countries = Object.keys(countryGroups).sort((a, b) => {
+            const indexA = countryNameOrder.indexOf(a);
+            const indexB = countryNameOrder.indexOf(b);
+            // If both found, sort by their defined order
+            if (indexA !== -1 && indexB !== -1) return indexA - indexB;
+            // If only one found, put the found one first
+            if (indexA !== -1) return -1;
+            if (indexB !== -1) return 1;
+            // If neither found, sort alphabetically
+            return a.localeCompare(b);
+        });
         const countryGroupNames = [];
 
         countries.forEach(country => {

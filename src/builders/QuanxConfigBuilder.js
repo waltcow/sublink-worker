@@ -81,8 +81,11 @@ const OUTBOUND_POLICY_ALIAS = {
 	'Social Media': 'Social Media'
 };
 
-// 地区分组顺序（用于策略组成员排列）
-const REGION_ORDER = ['Hong Kong', 'Taiwan', 'Japan', 'Korea', 'United States', 'Singapore'];
+// Import COUNTRIES to maintain consistent ordering
+import { COUNTRIES } from '../constants.js';
+
+// 地区分组顺序（用于策略组成员排列）- 从 COUNTRIES 动态生成
+const REGION_ORDER = Object.values(COUNTRIES).map(country => country.name);
 
 const DEFAULT_UPDATE_INTERVAL = 43200;
 
@@ -161,9 +164,9 @@ function updateTag(line, name) {
 }
 
 export class QuanxConfigBuilder extends BaseConfigBuilder {
-	constructor(inputString, selectedRules, customRules, baseConfig, lang, defaultExclude = [], kv = null, subscriptionCacheTtl = 300, subscriptionTimeout = 10000, subscriptionMaxRetries = 3) {
+	constructor(inputString, selectedRules, customRules, baseConfig, lang, defaultExclude = [], includeCountries = [], kv = null, subscriptionCacheTtl = 300, subscriptionTimeout = 10000, subscriptionMaxRetries = 3) {
 		const resolvedBaseConfig = baseConfig ?? QUANX_CONFIG;
-		super(inputString, resolvedBaseConfig, lang, false, [], defaultExclude, kv, subscriptionCacheTtl, subscriptionTimeout, subscriptionMaxRetries);
+		super(inputString, resolvedBaseConfig, lang, false, [], defaultExclude, includeCountries, kv, subscriptionCacheTtl, subscriptionTimeout, subscriptionMaxRetries);
 		this.selectedRules = selectedRules;
 		this.customRules = customRules;
 	}

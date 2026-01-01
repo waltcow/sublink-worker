@@ -5,6 +5,7 @@ import { TextareaWithActions } from './TextareaWithActions.jsx';
 import { ValidatedTextarea } from './ValidatedTextarea.jsx';
 import { formLogicFn } from './formLogic.js';
 import { UNIFIED_RULES, PREDEFINED_RULE_SETS } from '../config/index.js';
+import { COUNTRIES } from '../constants.js';
 
 const LINK_FIELDS = [
   { key: 'xray', labelKey: 'xrayLink' },
@@ -15,7 +16,7 @@ const LINK_FIELDS = [
 ];
 
 export const Form = (props) => {
-  const { t } = props;
+  const { t, lang } = props;
 
   const translations = {
     processing: t('processing'),
@@ -50,12 +51,18 @@ export const Form = (props) => {
     loadProfileConfirm: t('loadProfileConfirm'),
     deleteProfileConfirm: t('deleteProfileConfirm'),
     load: t('load'),
-    delete: t('delete')
+    delete: t('delete'),
+    countryFilter: t('countryFilter'),
+    countryFilterDesc: t('countryFilterDesc'),
+    selectedCountries: t('selectedCountries'),
+    clearAll: t('clearAll')
   };
 
   const scriptContent = `
     window.APP_TRANSLATIONS = ${JSON.stringify(translations)};
     window.PREDEFINED_RULE_SETS = ${JSON.stringify(PREDEFINED_RULE_SETS)};
+    window.APP_COUNTRIES = ${JSON.stringify(COUNTRIES)};
+    window.APP_LANG = ${JSON.stringify(lang)};
     window.__name = window.__name || ((target, value) => target);
     (${formLogicFn.toString()})();
   `;
@@ -192,6 +199,39 @@ export const Form = (props) => {
                   <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-300 dark:peer-focus:ring-primary-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-primary-600"></div>
                 </div>
               </label>
+
+              {/* 国家过滤 */}
+              <div class="p-4 rounded-lg bg-gray-50 dark:bg-gray-700/30 border border-gray-200 dark:border-gray-600">
+                <div class="flex items-center justify-between mb-3">
+                  <span class="font-medium text-gray-700 dark:text-gray-300">{t('countryFilter')}</span>
+                  <button
+                    type="button"
+                    {...{'x-on:click': 'includeCountries = []'}}
+                    x-show="includeCountries.length > 0"
+                    class="text-xs text-primary-600 dark:text-primary-400 hover:underline"
+                  >
+                    {t('clearAll')}
+                  </button>
+                </div>
+                <p class="text-xs text-gray-500 dark:text-gray-400 mb-3">{t('countryFilterDesc')}</p>
+                <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 max-h-48 overflow-y-auto">
+                  <template {...{'x-for': '(country, code) in window.APP_COUNTRIES', ':key': 'code'}}>
+                    <label class="flex items-center gap-2 p-2 rounded-lg hover:bg-white dark:hover:bg-gray-600/30 transition-colors cursor-pointer">
+                      <input
+                        type="checkbox"
+                        {...{':value': 'code'}}
+                        x-model="includeCountries"
+                        class="w-4 h-4 text-primary-600 bg-gray-100 border-gray-300 rounded focus:ring-primary-500 dark:focus:ring-primary-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
+                      />
+                      <span class="text-sm text-gray-700 dark:text-gray-300" {...{'x-text': '`${country.emoji} ${window.APP_LANG === \'zh-CN\' ? country.zhName : country.name}`'}}></span>
+                    </label>
+                  </template>
+                </div>
+                <div x-show="includeCountries.length > 0" class="mt-3 pt-3 border-t border-gray-200 dark:border-gray-600">
+                  <span class="text-xs text-gray-600 dark:text-gray-400">{t('selectedCountries')}: </span>
+                  <span class="text-xs font-medium text-primary-600 dark:text-primary-400" x-text="includeCountries.length"></span>
+                </div>
+              </div>
 
               <label class="flex items-center justify-between p-3 rounded-lg bg-gray-50 dark:bg-gray-700/30 hover:bg-gray-100 dark:hover:bg-gray-700/50 transition-colors cursor-pointer">
                 <span class="font-medium text-gray-700 dark:text-gray-300">{t('enableClashUI')}</span>

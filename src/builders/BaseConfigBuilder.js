@@ -4,7 +4,7 @@ import { createTranslator } from '../i18n/index.js';
 import { generateRules, getOutbounds, PREDEFINED_RULE_SETS } from '../config/index.js';
 
 export class BaseConfigBuilder {
-    constructor(inputString, baseConfig, lang, groupByCountry = false, keywordGroups = [], defaultExclude = [], kv = null, subscriptionCacheTtl = 300, subscriptionTimeout = 10000, subscriptionMaxRetries = 3) {
+    constructor(inputString, baseConfig, lang, groupByCountry = false, keywordGroups = [], defaultExclude = [], includeCountries = [], kv = null, subscriptionCacheTtl = 300, subscriptionTimeout = 10000, subscriptionMaxRetries = 3) {
         this.inputString = inputString;
         this.config = deepCopy(baseConfig);
         this.customRules = [];
@@ -16,6 +16,7 @@ export class BaseConfigBuilder {
         this.filteredProxyNames = new Set();  // Names of proxies filtered by keyword groups
         this.providerUrls = [];  // URLs to use as providers (auto-sync)
         this.defaultExclude = defaultExclude || [];  // Global default exclude keywords
+        this.includeCountries = includeCountries || [];  // Countries to include (by country code), empty means include all
         this.kv = kv;  // KV store for caching subscriptions
         this.subscriptionCacheTtl = subscriptionCacheTtl;  // Cache TTL in seconds
         this.subscriptionTimeout = subscriptionTimeout;  // Request timeout in milliseconds
@@ -85,6 +86,34 @@ export class BaseConfigBuilder {
         return excludeKeywords.some(keyword =>
             lowerName.includes(keyword.toLowerCase())
         );
+    }
+
+    /**
+     * Check if proxy should be excluded based on country filter
+     * @param {string} name - Proxy name
+     * @returns {boolean} - True if should be excluded
+     */
+    shouldExcludeProxyByCountry(name) {
+        // If includeCountries is empty, include all proxies
+        if (!this.includeCountries || this.includeCountries.length === 0 || !name) {
+            return false;
+        }
+
+        // Import parseCountryFromNodeName dynamically
+        const { parseCountryFromNodeName } = require('../utils.js');
+        const countryInfo = parseCountryFromNodeName(name);
+
+        // If country cannot be detected, exclude it (only include known countries)
+        if (!countryInfo || !countryInfo.code) {
+            return true;
+        }
+
+        // Only include proxies whose country code is in the include list
+        const isIncluded = this.includeCountries.some(includeCode =>
+            includeCode.toUpperCase() === countryInfo.code.toUpperCase()
+        );
+
+        return !isIncluded;  // Exclude if not in include list
     }
 
     /**
@@ -217,6 +246,10 @@ export class BaseConfigBuilder {
                                             if (this.shouldExcludeProxy(proxyName, hashConfig.exclude)) {
                                                 return; // Skip this proxy
                                             }
+                                            // Apply country exclude filter
+                                            if (this.shouldExcludeProxyByCountry(proxyName)) {
+                                                return; // Skip this proxy
+                                            }
                                             // Apply prefix to proxy name
                                             if (hashConfig.prefix) {
                                                 const newName = this.applyProxyPrefix(proxyName, hashConfig.prefix);
@@ -239,6 +272,10 @@ export class BaseConfigBuilder {
                                         if (this.shouldExcludeProxy(itemName, hashConfig.exclude)) {
                                             continue; // Skip this proxy
                                         }
+                                        // Apply country exclude filter
+                                        if (this.shouldExcludeProxyByCountry(itemName)) {
+                                            continue; // Skip this proxy
+                                        }
                                         // Apply prefix to proxy name
                                         if (hashConfig.prefix) {
                                             const newName = this.applyProxyPrefix(itemName, hashConfig.prefix);
@@ -253,6 +290,10 @@ export class BaseConfigBuilder {
 
                                             // Apply exclude filter
                                             if (this.shouldExcludeProxy(subName, hashConfig.exclude)) {
+                                                continue; // Skip this proxy
+                                            }
+                                            // Apply country exclude filter
+                                            if (this.shouldExcludeProxyByCountry(subName)) {
                                                 continue; // Skip this proxy
                                             }
                                             // Apply prefix to proxy name

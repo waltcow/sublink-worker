@@ -3,11 +3,12 @@ import { groupProxiesByCountry, groupProxiesByKeyword } from '../utils.js';
 import { SURGE_CONFIG, SURGE_SITE_RULE_SET_BASEURL, SURGE_IP_RULE_SET_BASEURL, generateRules, getOutbounds, PREDEFINED_RULE_SETS } from '../config/index.js';
 import { addProxyWithDedup } from './helpers/proxyHelpers.js';
 import { buildSelectorMembers, buildNodeSelectMembers, uniqueNames, moveDirectToFront, moveRejectToFront } from './helpers/groupBuilder.js';
+import { COUNTRIES } from '../constants.js';
 
 export class SurgeConfigBuilder extends BaseConfigBuilder {
-    constructor(inputString, selectedRules, customRules, baseConfig, lang, groupByCountry, keywordGroups = [], defaultExclude = [], kv = null, subscriptionCacheTtl = 300, subscriptionTimeout = 10000, subscriptionMaxRetries = 3) {
+    constructor(inputString, selectedRules, customRules, baseConfig, lang, groupByCountry, keywordGroups = [], defaultExclude = [], includeCountries = [], kv = null, subscriptionCacheTtl = 300, subscriptionTimeout = 10000, subscriptionMaxRetries = 3) {
         const resolvedBaseConfig = baseConfig ?? SURGE_CONFIG;
-        super(inputString, resolvedBaseConfig, lang, groupByCountry, keywordGroups, defaultExclude, kv, subscriptionCacheTtl, subscriptionTimeout, subscriptionMaxRetries);
+        super(inputString, resolvedBaseConfig, lang, groupByCountry, keywordGroups, defaultExclude, includeCountries, kv, subscriptionCacheTtl, subscriptionTimeout, subscriptionMaxRetries);
         this.selectedRules = selectedRules;
         this.customRules = customRules;
         this.subscriptionUrl = null;
@@ -327,7 +328,20 @@ export class SurgeConfigBuilder extends BaseConfigBuilder {
         });
 
         const countryGroupNames = [];
-        const countries = Object.keys(countryGroups).sort((a, b) => a.localeCompare(b));
+        // Sort countries by the order defined in COUNTRIES constant
+        // groupProxiesByCountry uses country English names as keys, so we build the order from COUNTRIES values
+        const countryNameOrder = Object.values(COUNTRIES).map(c => c.name);
+        const countries = Object.keys(countryGroups).sort((a, b) => {
+            const indexA = countryNameOrder.indexOf(a);
+            const indexB = countryNameOrder.indexOf(b);
+            // If both found, sort by their defined order
+            if (indexA !== -1 && indexB !== -1) return indexA - indexB;
+            // If only one found, put the found one first
+            if (indexA !== -1) return -1;
+            if (indexB !== -1) return 1;
+            // If neither found, sort alphabetically
+            return a.localeCompare(b);
+        });
 
         countries.forEach(country => {
             const { emoji, name, proxies } = countryGroups[country];

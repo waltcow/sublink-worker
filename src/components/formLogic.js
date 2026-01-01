@@ -16,6 +16,7 @@ export const formLogicFn = (t) => {
             selectedPredefinedRule: 'balanced',
             groupByCountry: false,
             keywordGroups: [],      // 关键词分组配置
+            includeCountries: [],   // 国家过滤配置
             enableClashUI: false,
             externalController: '',
             externalUiDownloadUrl: '',
@@ -142,6 +143,16 @@ export const formLogicFn = (t) => {
                     }
                 }
 
+                // Load include countries
+                const savedIncludeCountries = localStorage.getItem('includeCountries');
+                if (savedIncludeCountries) {
+                    try {
+                        this.includeCountries = JSON.parse(savedIncludeCountries);
+                    } catch (e) {
+                        this.includeCountries = [];
+                    }
+                }
+
                 // Initialize rules
                 this.applyPredefinedRule();
 
@@ -169,6 +180,7 @@ export const formLogicFn = (t) => {
                 this.$watch('customShortCode', val => localStorage.setItem('customShortCode', val));
                 this.$watch('accordionSections', val => localStorage.setItem('accordionSections', JSON.stringify(val)), { deep: true });
                 this.$watch('keywordGroups', val => localStorage.setItem('keywordGroups', JSON.stringify(val)), { deep: true });
+                this.$watch('includeCountries', val => localStorage.setItem('includeCountries', JSON.stringify(val)), { deep: true });
             },
 
             requestSaveProfile() {
@@ -194,6 +206,7 @@ export const formLogicFn = (t) => {
                         configType: this.configType,
                         configEditor: this.configEditor,
                         keywordGroups: this.keywordGroups,
+                        includeCountries: this.includeCountries,
                         customShortCode: this.customShortCode,
                         accordionSections: this.accordionSections
                     }
@@ -231,6 +244,7 @@ export const formLogicFn = (t) => {
                 if (settings.configType !== undefined) this.configType = settings.configType;
                 if (settings.configEditor !== undefined) this.configEditor = settings.configEditor;
                 if (settings.keywordGroups !== undefined) this.keywordGroups = settings.keywordGroups;
+                if (settings.includeCountries !== undefined) this.includeCountries = settings.includeCountries;
                 if (settings.customShortCode !== undefined) this.customShortCode = settings.customShortCode;
                 if (settings.accordionSections !== undefined) this.accordionSections = settings.accordionSections;
 
@@ -554,6 +568,7 @@ export const formLogicFn = (t) => {
                     if (this.externalController) params.append('external_controller', this.externalController);
                     if (this.externalUiDownloadUrl) params.append('external_ui_download_url', this.externalUiDownloadUrl);
                     if (this.keywordGroups && this.keywordGroups.length > 0) params.append('keyword_groups', JSON.stringify(this.keywordGroups));
+                    if (this.includeCountries && this.includeCountries.length > 0) params.append('include_countries', JSON.stringify(this.includeCountries));
                     if (this.ruleProviderFormat) params.append('rule_provider_format', this.ruleProviderFormat);
 
                     // Add configId if present in URL

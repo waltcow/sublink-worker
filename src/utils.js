@@ -428,8 +428,9 @@ export function parseArray(value) {
 
 export function parseCountryFromNodeName(nodeName) {
 	const countryData = {
+		'CN': { name: 'China', emoji: '🇨🇳', aliases: ['中国', 'China', 'CN'] },
 		'HK': { name: 'Hong Kong', emoji: '🇭🇰', aliases: ['香港', 'Hong Kong', 'HK'] },
-		'TW': { name: 'Taiwan', emoji: '🇹🇼', aliases: ['台湾', 'Taiwan', 'TW'] },
+		'TW': { name: 'Taiwan', emoji: '🇨🇳', aliases: ['台湾', 'Taiwan', 'TW'] },
 		'JP': { name: 'Japan', emoji: '🇯🇵', aliases: ['日本', 'Japan', 'JP'] },
 		'KR': { name: 'Korea', emoji: '🇰🇷', aliases: ['韩国', 'Korea', 'KR'] },
 		'SG': { name: 'Singapore', emoji: '🇸🇬', aliases: ['新加坡', 'Singapore', 'SG'] },
@@ -461,11 +462,13 @@ export function parseCountryFromNodeName(nodeName) {
 	};
 
 	const allAliases = Object.values(countryData).flatMap(c => c.aliases);
-	const regex = new RegExp(allAliases.map(p => p.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&')).join('|'), 'i');
-	const match = nodeName.match(regex);
+	const regex = new RegExp(allAliases.map(p => p.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&')).join('|'), 'gi');
+	const matches = nodeName.match(regex);
 
-	if (match) {
-		const matchedAlias = match[0];
+	// If multiple countries found, use the last one (usually the destination/actual location)
+	// e.g., "中国-日本" should be classified as Japan, not China
+	if (matches && matches.length > 0) {
+		const matchedAlias = matches[matches.length - 1]; // Take the last match
 		for (const code in countryData) {
 			if (countryData[code].aliases.some(alias => alias.toLowerCase() === matchedAlias.toLowerCase())) {
 				return { code, ...countryData[code] };
