@@ -205,6 +205,7 @@ export function createApp(bindings = {}) {
                 customRules,
                 baseConfig,
                 lang,
+                keywordGroups,
                 defaultExclude,
                 includeCountries,
                 runtime.kv,

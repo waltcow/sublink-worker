@@ -1,7 +1,7 @@
 import { BaseConfigBuilder } from './BaseConfigBuilder.js';
 import { QUANX_CONFIG, QUANX_RULE_SET_BASE_URL, generateRules } from '../config/index.js';
 import { addProxyWithDedup } from './helpers/proxyHelpers.js';
-import { groupProxiesByCountry } from '../utils.js';
+import { groupProxiesByCountry, groupProxiesByKeyword } from '../utils.js';
 
 const QUANX_RULE_TAG_MAP = {
 	'category-ads-all': 'Advertising/Advertising.list',
@@ -164,15 +164,98 @@ function updateTag(line, name) {
 }
 
 export class QuanxConfigBuilder extends BaseConfigBuilder {
-	constructor(inputString, selectedRules, customRules, baseConfig, lang, defaultExclude = [], includeCountries = [], kv = null, subscriptionCacheTtl = 300, subscriptionTimeout = 10000, subscriptionMaxRetries = 3) {
+	constructor(inputString, selectedRules, customRules, baseConfig, lang, keywordGroups = [], defaultExclude = [], includeCountries = [], kv = null, subscriptionCacheTtl = 300, subscriptionTimeout = 10000, subscriptionMaxRetries = 3) {
 		const resolvedBaseConfig = baseConfig ?? QUANX_CONFIG;
-		super(inputString, resolvedBaseConfig, lang, false, [], defaultExclude, includeCountries, kv, subscriptionCacheTtl, subscriptionTimeout, subscriptionMaxRetries);
+		super(inputString, resolvedBaseConfig, lang, false, keywordGroups, defaultExclude, includeCountries, kv, subscriptionCacheTtl, subscriptionTimeout, subscriptionMaxRetries);
 		this.selectedRules = selectedRules;
 		this.customRules = customRules;
+		this.keywordGroupNames = [];
 	}
 
 	addSelectors() {
 		// QuanX output uses the template policy and rule sections directly.
+		// Keyword groups will be added in formatConfig after ensurePolicyGroups
+	}
+
+	addKeywordGroupsToPolicySection() {
+		const proxies = this.getProxies();
+		const result = groupProxiesByKeyword(proxies, this.keywordGroups, {
+			getName: proxy => this.getProxyName(proxy)
+		});
+		const keywordGroups = result.groups;
+		this.filteredProxyNames = result.filteredProxyNames;
+
+		// 获取现有策略组名称（避免重复）
+		const existingPolicyNames = new Set();
+		if (Array.isArray(this.config.policy)) {
+			this.config.policy.forEach(line => {
+				const name = extractPolicyName(line);
+				if (name) existingPolicyNames.add(name.trim());
+			});
+		}
+
+		// 按字母顺序排序分组
+		const groups = Object.keys(keywordGroups).sort((a, b) => a.localeCompare(b));
+		const keywordGroupNames = [];
+		const keywordPolicyLines = [];
+
+		groups.forEach(groupKey => {
+			const { emoji, name, type, includeDirect, proxies: groupProxies } = keywordGroups[groupKey];
+			if (!groupProxies || groupProxies.length === 0) {
+				return;
+			}
+
+			const groupName = emoji ? `${emoji} ${name}` : name;
+
+			// 如果策略组已存在，跳过
+			if (existingPolicyNames.has(groupName.trim())) {
+				return;
+			}
+
+			// 构建成员列表
+			const members = includeDirect
+				? [...groupProxies, 'direct']
+				: groupProxies;
+
+			// 根据类型创建策略组
+			// type === 'urltest' 使用 available（自动选择最优）
+			// type === 'select' 或其他使用 static（手动选择）
+			const policyType = type === 'urltest' ? 'available' : 'static';
+			let line = `${policyType}=${groupName},${members.join(',')}`;
+
+			// TODO: 添加图标支持（可选）
+			// 如果需要图标，可以添加 img-url 参数
+			// if (iconUrl) {
+			//     line += `,img-url=${iconUrl}`;
+			// }
+
+			keywordPolicyLines.push(line);
+			keywordGroupNames.push(groupName);
+			existingPolicyNames.add(groupName.trim());
+		});
+
+		// 将关键词分组添加到 policy 数组的末尾（在地区分组之前）
+		if (keywordPolicyLines.length > 0) {
+			if (!Array.isArray(this.config.policy)) {
+				this.config.policy = [];
+			}
+
+			// 在现有策略组和地区分组之间插入关键词分组
+			// 找到第一个 available 类型的策略组位置（地区分组）
+			let insertIndex = this.config.policy.length;
+			for (let i = 0; i < this.config.policy.length; i++) {
+				const line = this.config.policy[i];
+				if (typeof line === 'string' && line.startsWith('available=')) {
+					insertIndex = i;
+					break;
+				}
+			}
+
+			// 在该位置插入关键词分组
+			this.config.policy.splice(insertIndex, 0, ...keywordPolicyLines);
+		}
+
+		this.keywordGroupNames = keywordGroupNames;
 	}
 
 	getProxies() {
@@ -534,6 +617,13 @@ export class QuanxConfigBuilder extends BaseConfigBuilder {
 	formatConfig() {
 		const rules = generateRules(this.selectedRules, this.customRules);
 		this.ensurePolicyGroups(rules);
+
+		// 在 ensurePolicyGroups 之后添加关键词分组
+		// 这样可以确保关键词分组不会被覆盖
+		if (this.keywordGroups && this.keywordGroups.length > 0) {
+			this.addKeywordGroupsToPolicySection();
+		}
+
 		this.config.filter_remote = this.buildFilterRemote(rules);
 		this.config.filter_local = this.buildFilterLocal(rules);
 
