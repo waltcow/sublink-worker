@@ -63,7 +63,7 @@ export const UNIFIED_RULES = [
 	},
 	{
 		name: 'Social Media',
-		site_rules: ['facebook', 'instagram', 'twitter', 'tiktok', 'linkedin'],
+		site_rules: ['facebook', 'instagram', 'twitter', 'tiktok', 'linkedin', 'reddit'],
 		ip_rules: []
 	},
 	{

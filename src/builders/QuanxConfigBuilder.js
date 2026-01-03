@@ -31,6 +31,7 @@ const QUANX_RULE_TAG_MAP = {
 	'twitter': 'Twitter/Twitter.list',
 	'tiktok': 'TikTok/TikTok.list',
 	'linkedin': 'LinkedIn/LinkedIn.list',
+	'reddit': 'Reddit/Reddit.list',
 	'netflix': 'Netflix/Netflix.list',
 	'hulu': 'Hulu/Hulu.list',
 	'disney': 'Disney/Disney.list',
