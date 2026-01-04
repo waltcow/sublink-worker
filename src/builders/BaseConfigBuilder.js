@@ -175,10 +175,10 @@ export class BaseConfigBuilder {
     const { parseSubscriptionContent } =
       await import("../parsers/subscription/subscriptionContentParser.js");
 
-    // Try to parse the entire input as a config format (Sing-Box JSON or Clash YAML)
+    // Try to parse the entire input as a config format (Clash YAML)
     const directResult = parseSubscriptionContent(input);
     if (directResult && typeof directResult === "object" && directResult.type) {
-      // It's a parsed config (singboxConfig or yamlConfig)
+      // It's a parsed config (yamlConfig or surgeConfig)
       if (directResult.config) {
         this.applyConfigOverrides(directResult.config);
       }
@@ -268,7 +268,6 @@ export class BaseConfigBuilder {
                 result &&
                 typeof result === "object" &&
                 (result.type === "yamlConfig" ||
-                  result.type === "singboxConfig" ||
                   result.type === "surgeConfig")
               ) {
                 if (result.config) {
@@ -366,12 +365,11 @@ export class BaseConfigBuilder {
 
         // Non-HTTP URLs (protocol URIs like ss://, vmess://, etc.)
         const result = await ProxyParser.parse(processedUrl);
-        // Handle yamlConfig, singboxConfig, and surgeConfig types (they have the same structure)
+        // Handle yamlConfig and surgeConfig types (they have the same structure)
         if (
           result &&
           typeof result === "object" &&
           (result.type === "yamlConfig" ||
-            result.type === "singboxConfig" ||
             result.type === "surgeConfig")
         ) {
           if (result.config) {
@@ -409,7 +407,7 @@ export class BaseConfigBuilder {
   /**
    * Check if subscription format is compatible for use as a provider
    * Override in child classes to enable provider support
-   * @param {'clash'|'singbox'|'unknown'} format - Detected subscription format
+   * @param {'clash'|'unknown'} format - Detected subscription format
    * @returns {boolean} - True if format can be used as provider
    */
   isCompatibleProviderFormat(format) {

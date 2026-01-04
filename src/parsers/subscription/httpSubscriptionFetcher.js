@@ -108,22 +108,10 @@ function decodeContent(text) {
 /**
  * Detect the format of subscription content
  * @param {string} content - Decoded subscription content
- * @returns {'clash'|'singbox'|'unknown'} - Detected format
+ * @returns {'clash'|'unknown'} - Detected format
  */
 function detectFormat(content) {
   const trimmed = content.trim();
-
-  // Try JSON (Sing-Box format)
-  if (trimmed.startsWith("{")) {
-    try {
-      const parsed = JSON.parse(trimmed);
-      if (parsed.outbounds || parsed.inbounds || parsed.route) {
-        return "singbox";
-      }
-    } catch {
-      // Not valid JSON
-    }
-  }
 
   // Try YAML (Clash format) - check for proxies: key
   if (trimmed.includes("proxies:")) {
@@ -165,7 +153,7 @@ export async function fetchSubscription(url) {
  * @param {number} options.timeout - Request timeout in milliseconds (default: 10000)
  * @param {number} options.maxRetries - Maximum number of retries (default: 3)
  * @param {number} options.retryDelay - Base retry delay in milliseconds (default: 1000)
- * @returns {Promise<{content: string, format: 'clash'|'singbox'|'unknown', url: string}|null>}
+ * @returns {Promise<{content: string, format: 'clash'|'unknown', url: string}|null>}
  */
 export async function fetchSubscriptionWithFormat(url, options = {}) {
   const {

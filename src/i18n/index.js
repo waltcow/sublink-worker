@@ -6,7 +6,7 @@ export const translations = {
   "zh-CN": {
     enableClashUI: "启用 Clash API",
     enableClashUITip:
-      "在 SingBox 配置中启用 Clash API (支持 Dashboard 面板)，默认端口 9090",
+      "在 Clash 配置中启用外部控制器 (支持 Dashboard 面板)，默认端口 9090",
     externalController: "外部控制端口",
     externalControllerPlaceholder: "默认 0.0.0.0:9090",
     externalUiDownloadUrl: "Clash UI 下载地址",
@@ -27,13 +27,13 @@ export const translations = {
     defaultRules: ["广告拦截", "谷歌服务", "国外媒体", "电报消息"],
     configValidationError: "配置验证错误：",
     pageDescription: `${APP_NAME} - 订阅链接转换工具`,
-    pageKeywords: "订阅链接,转换,Xray,SingBox,Clash,Surge",
+    pageKeywords: "订阅链接,转换,Xray,Clash,Surge",
     pageTitle: `${APP_NAME} - 订阅链接转换工具`,
     ogTitle: `${APP_NAME} - 订阅链接转换工具`,
     ogDescription: "一个强大的订阅链接转换工具，支持多种客户端格式",
     shareUrls: "输入源",
     urlPlaceholder:
-      "支持粘贴：分享链接、Clash 配置、Sing-Box 配置、Surge 配置...",
+      "支持粘贴：分享链接、Clash 配置、Surge 配置...",
     advancedOptions: "高级选项",
     baseConfigSettings: "基础配置设置",
     baseConfigTooltip: "在此处自定义您的基础配置",
@@ -62,11 +62,11 @@ export const translations = {
     customRuleOutboundName: "出站名称*",
     customRuleGeoSite: "Geo-Site规则集",
     customRuleGeoSiteTooltip:
-      "SingBox中的Site规则来自 https://github.com/lyc8503/sing-box-rules，这意味着您的自定义规则必须在该仓库中",
+      "Site规则来自 https://github.com/lyc8503/sing-box-rules，这意味着您的自定义规则必须在该仓库中",
     customRuleGeoSitePlaceholder: "例如：google,anthropic",
     customRuleGeoIP: "Geo-IP规则集",
     customRuleGeoIPTooltip:
-      "SingBox中的IP规则来自 https://github.com/lyc8503/sing-box-rules，这意味着您的自定义规则必须在该仓库中",
+      "IP规则来自 https://github.com/lyc8503/sing-box-rules，这意味着您的自定义规则必须在该仓库中",
     customRuleGeoIPPlaceholder: "例如：private,cn",
     customRuleDomainSuffix: "域名后缀",
     customRuleDomainSuffixPlaceholder: "域名后缀（用逗号分隔）",
@@ -138,7 +138,7 @@ export const translations = {
     },
     generalSettings: "通用设置",
     groupByCountry: "按国家分组",
-    groupByCountryTip: "仅 Clash/Surge/SingBox 生效",
+    groupByCountryTip: "仅 Clash/Surge 生效",
     countryFilter: "国家/地区过滤",
     countryFilterDesc: "选择想要保留的国家/地区节点，不选则保留所有",
     selectedCountries: "已选择",
@@ -152,7 +152,6 @@ export const translations = {
     remove: "删除",
     subscriptionLinks: "订阅链接",
     xrayLink: "Xray 链接 (Base64)",
-    singboxLink: "SingBox 链接",
     clashLink: "Clash 链接",
     surgeLink: "Surge 链接",
     quanxLink: "QuanX 链接",
@@ -195,7 +194,7 @@ export const translations = {
   "en-US": {
     enableClashUI: "Enable Clash API",
     enableClashUITip:
-      "Enable Clash API in SingBox config (Support Dashboard), default port 9090",
+      "Enable external controller in Clash config (Support Dashboard), default port 9090",
     externalController: "External Controller",
     externalControllerPlaceholder: "Default 0.0.0.0:9090",
     externalUiDownloadUrl: "External UI Download URL",
@@ -221,14 +220,14 @@ export const translations = {
     ],
     configValidationError: "Config validation error: ",
     pageDescription: `${APP_NAME} - Subscription Link Converter`,
-    pageKeywords: "subscription link,converter,Xray,SingBox,Clash,Surge",
+    pageKeywords: "subscription link,converter,Xray,Clash,Surge",
     pageTitle: `${APP_NAME} - Subscription Link Converter`,
     ogTitle: `${APP_NAME} - Subscription Link Converter`,
     ogDescription:
       "A powerful subscription link converter supporting multiple client formats",
     shareUrls: "Input Source",
     urlPlaceholder:
-      "Paste share links, Clash config, Sing-Box config, or Surge config...",
+      "Paste share links, Clash config, or Surge config...",
     advancedOptions: "Advanced Options",
     baseConfigSettings: "Base Config Settings",
     baseConfigTooltip: "Customize your base configuration here",
@@ -257,11 +256,11 @@ export const translations = {
     customRuleOutboundName: "Outbound Name*",
     customRuleGeoSite: "Geo-Site Rules",
     customRuleGeoSiteTooltip:
-      "SingBox Site rules come from https://github.com/lyc8503/sing-box-rules, which means your custom rules must be in that repository",
+      "Site rules come from https://github.com/lyc8503/sing-box-rules, which means your custom rules must be in that repository",
     customRuleGeoSitePlaceholder: "e.g., google,anthropic",
     customRuleGeoIP: "Geo-IP Rules",
     customRuleGeoIPTooltip:
-      "SingBox IP rules come from https://github.com/lyc8503/sing-box-rules, which means your custom rules must be in that repository",
+      "IP rules come from https://github.com/lyc8503/sing-box-rules, which means your custom rules must be in that repository",
     customRuleGeoIPPlaceholder: "e.g., private,cn",
     customRuleDomainSuffix: "Domain Suffix",
     customRuleDomainSuffixPlaceholder: "Domain suffixes (comma separated)",
@@ -335,7 +334,7 @@ export const translations = {
     },
     generalSettings: "General Settings",
     groupByCountry: "Group by Country",
-    groupByCountryTip: "Clash/Surge/SingBox only",
+    groupByCountryTip: "Clash/Surge only",
     countryFilter: "Country/Region Filter",
     countryFilterDesc:
       "Select countries/regions to keep. Leave empty to keep all",
@@ -350,7 +349,6 @@ export const translations = {
     remove: "Remove",
     subscriptionLinks: "Subscription Links",
     xrayLink: "Xray Link (Base64)",
-    singboxLink: "SingBox Link",
     clashLink: "Clash Link",
     surgeLink: "Surge Link",
     quanxLink: "QuanX Link",

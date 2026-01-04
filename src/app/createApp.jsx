@@ -5,7 +5,6 @@ import { Layout } from '../components/Layout.jsx';
 import { Navbar } from '../components/Navbar.jsx';
 import { Form } from '../components/Form.jsx';
 import { Footer } from '../components/Footer.jsx';
-import { SingboxConfigBuilder } from '../builders/SingboxConfigBuilder.js';
 import { ClashConfigBuilder } from '../builders/ClashConfigBuilder.js';
 import { SurgeConfigBuilder } from '../builders/SurgeConfigBuilder.js';
 import { QuanxConfigBuilder } from '../builders/QuanxConfigBuilder.js';
@@ -16,7 +15,7 @@ import { ShortLinkService } from '../services/shortLinkService.js';
 import { ConfigStorageService } from '../services/configStorageService.js';
 import { ServiceError, MissingDependencyError } from '../services/errors.js';
 import { normalizeRuntime } from '../runtime/runtimeConfig.js';
-import { PREDEFINED_RULE_SETS, SING_BOX_CONFIG, SING_BOX_CONFIG_V1_11 } from '../config/index.js';
+import { PREDEFINED_RULE_SETS } from '../config/index.js';
 import { faviconBytes } from '../assets/favicon.js';
 
 const FAVICON_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="SubLink logo">
@@ -118,38 +117,6 @@ export function createApp(bindings = {}) {
         if (configId) {
             const storage = requireConfigStorage(services.configStorage);
             baseConfig = await storage.getConfigById(configId);
-        }
-
-        if (type === 'singbox') {
-            const requestedVersion = queryGetter('singbox_version') || queryGetter('sb_version') || queryGetter('sb_ver');
-            const requestUserAgent = getRequestHeader(c.req, 'User-Agent');
-            const singboxConfigVersion = resolveSingboxConfigVersion(requestedVersion, requestUserAgent);
-
-            let sbBaseConfig = baseConfig;
-            if (!sbBaseConfig) {
-                sbBaseConfig = singboxConfigVersion === '1.11' ? SING_BOX_CONFIG_V1_11 : SING_BOX_CONFIG;
-            }
-
-            const builder = new SingboxConfigBuilder(
-                config,
-                selectedRules,
-                customRules,
-                sbBaseConfig,
-                lang,
-                groupByCountry,
-                enableClashUI,
-                externalController,
-                externalUiDownloadUrl,
-                singboxConfigVersion,
-                keywordGroups,
-                enableProviders,
-                defaultExclude,
-                includeCountries,
-                runtime.kv,
-                runtime.config.subscriptionCacheTtl
-            );
-            await builder.build();
-            return c.json(builder.config);
         }
 
         if (type === 'clash') {
@@ -273,14 +240,6 @@ export function createApp(bindings = {}) {
         );
     });
 
-    app.get('/singbox', async (c) => {
-        try {
-            return await generateConfigResponse(c, 'singbox', (key) => c.req.query(key));
-        } catch (error) {
-            return handleError(c, error, runtime.logger);
-        }
-    });
-
     app.get('/clash', async (c) => {
         try {
             return await generateConfigResponse(c, 'clash', (key) => c.req.query(key));
@@ -338,7 +297,6 @@ export function createApp(bindings = {}) {
     // Updated Short Link Handlers (Direct Serve)
     app.get('/s/:code', handleShortLink('surge'));
     app.get('/q/:code', handleShortLink('quanx'));
-    app.get('/b/:code', handleShortLink('singbox'));
     app.get('/c/:code', handleShortLink('clash'));
     app.get('/x/:code', handleShortLink('xray'));
 
@@ -373,13 +331,13 @@ export function createApp(bindings = {}) {
 
             const prefix = pathParts[1];
             const shortCode = pathParts[2];
-            if (!['b', 'c', 'x', 's', 'q'].includes(prefix)) return c.text(t('invalidShortUrl'), 400);
+            if (!['c', 'x', 's', 'q'].includes(prefix)) return c.text(t('invalidShortUrl'), 400);
 
             const shortLinks = requireShortLinkService(services.shortLinks);
             const originalParam = await shortLinks.resolveShortCode(shortCode);
             if (!originalParam) return c.text(t('shortUrlNotFound'), 404);
 
-            const mapping = { b: 'singbox', c: 'clash', x: 'xray', s: 'surge', q: 'quanx' };
+            const mapping = { c: 'clash', x: 'xray', s: 'surge', q: 'quanx' };
             const originalUrl = `${urlObj.origin}/${mapping[prefix]}${originalParam}`;
             return c.json({ originalUrl });
         } catch (error) {
@@ -464,58 +422,6 @@ function parseDefaultExclude(raw) {
 
 function parseBooleanFlag(value) {
     return value === 'true' || value === true;
-}
-
-function parseSemverLike(value) {
-    if (typeof value !== 'string') {
-        return null;
-    }
-    const trimmed = value.trim();
-    if (!trimmed) {
-        return null;
-    }
-    const match = trimmed.match(/(\d+)\.(\d+)(?:\.(\d+))?/);
-    if (!match) {
-        return null;
-    }
-    return {
-        major: Number(match[1]),
-        minor: Number(match[2]),
-        patch: match[3] ? Number(match[3]) : 0
-    };
-}
-
-function isSingboxLegacyConfig(version) {
-    if (!version || Number.isNaN(version.major) || Number.isNaN(version.minor)) {
-        return false;
-    }
-    if (version.major !== 1) {
-        return version.major < 1;
-    }
-    return version.minor < 12;
-}
-
-function resolveSingboxConfigVersion(requestedVersion, userAgent) {
-    const normalizedRequested = typeof requestedVersion === 'string' ? requestedVersion.trim().toLowerCase() : '';
-    if (normalizedRequested && normalizedRequested !== 'auto') {
-        if (normalizedRequested === 'legacy') return '1.11';
-        if (normalizedRequested === 'latest') return '1.12';
-        const parsed = parseSemverLike(normalizedRequested);
-        if (parsed) {
-            return isSingboxLegacyConfig(parsed) ? '1.11' : '1.12';
-        }
-    }
-
-    if (typeof userAgent === 'string' && userAgent) {
-        const uaMatch = userAgent.match(/sing-box\/(\d+\.\d+(?:\.\d+)?)/i) || userAgent.match(/sing-box\s+(\d+\.\d+(?:\.\d+)?)/i);
-        const versionString = uaMatch?.[1];
-        const parsed = versionString ? parseSemverLike(versionString) : null;
-        if (parsed) {
-            return isSingboxLegacyConfig(parsed) ? '1.11' : '1.12';
-        }
-    }
-
-    return '1.12';
 }
 
 function getRequestHeader(request, name) {

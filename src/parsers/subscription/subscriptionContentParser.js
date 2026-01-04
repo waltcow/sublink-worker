@@ -5,129 +5,6 @@ import { convertSurgeProxyToObject } from "../convertSurgeProxyToObject.js";
 import { convertSurgeIniToJson } from "../../utils/surgeConfigParser.js";
 
 /**
- * Non-proxy outbound types in Sing-Box that should be filtered out from proxies list
- */
-const SINGBOX_NON_PROXY_TYPES = new Set([
-  "direct",
-  "block",
-  "dns",
-  "selector",
-  "urltest",
-]);
-
-/**
- * Sing-Box outbound types that represent proxy groups (should be converted to proxy-groups)
- */
-const SINGBOX_GROUP_TYPES = new Set(["selector", "urltest"]);
-
-/**
- * Try to parse content as Sing-Box JSON format
- * @param {string} content - The content to parse
- * @returns {object|null} - Parsed result or null if not Sing-Box format
- */
-export function parseSingboxJson(content) {
-  try {
-    const parsed = JSON.parse(content);
-    if (
-      parsed &&
-      typeof parsed === "object" &&
-      Array.isArray(parsed.outbounds)
-    ) {
-      const proxies = parsed.outbounds.filter(
-        (o) =>
-          o &&
-          typeof o === "object" &&
-          o.server &&
-          o.type &&
-          !SINGBOX_NON_PROXY_TYPES.has(o.type),
-      );
-      if (proxies.length > 0) {
-        const configOverrides = deepCopy(parsed);
-        delete configOverrides.outbounds;
-
-        // Extract selector/urltest outbounds and convert to Clash proxy-groups format
-        const proxyGroups = parsed.outbounds
-          .filter((o) => o && SINGBOX_GROUP_TYPES.has(o.type))
-          .map((o) => convertSingboxGroupToClashFormat(o))
-          .filter((g) => g != null);
-
-        if (proxyGroups.length > 0) {
-          configOverrides["proxy-groups"] = proxyGroups;
-        }
-
-        return {
-          type: "singboxConfig",
-          proxies,
-          config:
-            Object.keys(configOverrides).length > 0 ? configOverrides : null,
-        };
-      }
-    }
-  } catch (e) {
-    // Not valid JSON
-  }
-  return null;
-}
-
-/**
- * Convert Sing-Box selector/urltest outbound to Clash proxy-group format
- * @param {object} outbound - Sing-Box outbound object
- * @returns {object|null} - Clash proxy-group object
- */
-function convertSingboxGroupToClashFormat(outbound) {
-  if (!outbound || !outbound.tag || !outbound.type) {
-    return null;
-  }
-
-  const group = {
-    name: outbound.tag,
-    type: outbound.type === "selector" ? "select" : "url-test",
-    proxies: outbound.outbounds || [],
-  };
-
-  // Add url-test specific fields
-  if (outbound.type === "urltest") {
-    group.url = outbound.url || "http://www.gstatic.com/generate_204";
-    // Handle interval - could be string like "5m" or number
-    if (outbound.interval) {
-      group.interval = parseInterval(outbound.interval);
-    } else {
-      group.interval = 300;
-    }
-  }
-
-  return group;
-}
-
-/**
- * Parse interval string to seconds
- * @param {string|number} interval - Interval value (e.g., "5m", "300", 300)
- * @returns {number} - Interval in seconds
- */
-function parseInterval(interval) {
-  if (typeof interval === "number") {
-    return interval;
-  }
-  if (typeof interval === "string") {
-    const match = interval.match(/^(\d+)(s|m|h)?$/);
-    if (match) {
-      const value = parseInt(match[1]);
-      const unit = match[2] || "s";
-      switch (unit) {
-        case "h":
-          return value * 3600;
-        case "m":
-          return value * 60;
-        default:
-          return value;
-      }
-    }
-    return parseInt(interval) || 300;
-  }
-  return 300;
-}
-
-/**
  * Try to parse content as Clash YAML format
  * @param {string} content - The content to parse
  * @returns {object|null} - Parsed result or null if not Clash format
@@ -268,7 +145,7 @@ function parseSurgeProxyGroupLine(line) {
 
 /**
  * Parse subscription content and extract proxies
- * Tries multiple formats in order: Sing-Box JSON -> Clash YAML -> Surge INI -> Line-by-line
+ * Tries multiple formats in order: Clash YAML -> Surge INI -> Line-by-line
  *
  * @param {string} content - The decoded subscription content
  * @returns {object|string[]} - Parsed config object or array of lines
@@ -281,12 +158,6 @@ export function parseSubscriptionContent(content) {
   const trimmed = content.trim();
   if (!trimmed) {
     return [];
-  }
-
-  // Try Sing-Box JSON first
-  const singboxResult = parseSingboxJson(trimmed);
-  if (singboxResult) {
-    return singboxResult;
   }
 
   // Try Clash YAML

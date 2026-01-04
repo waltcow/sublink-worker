@@ -17,7 +17,7 @@ trojan://password@example.com:443?sni=example.com#美国节点2
 vmess://ewogICJ2IjogIjIiLAogICJwcyI6ICJ0dzEubm9kZS5jb20iLAogICJhZGQiOiAidHcxLm5vZGUuY29tIiwKICAicG9ydCI6IDQ0MywKICAiaWQiOiAiZGE4Y2FkMTYtYjEzNS00MmZlLWEzYjYtNzUyZGFhY2E5MGIwIiwKICAiYWlkIjogMCwKICAibmV0IjogIndzIiwKICAidHlwZSI6ICJub25lIiwKICAiaG9zdCI6ICJ0dzEubm9kZS5jb20iLAogICJwYXRoIjogIi92bWVzcyIsCiAgInRscyI6ICJ0bHMiCn0=#台湾节点
     `;
 
-        const builder = new ClashConfigBuilder(input, 'all', [], null, 'zh-CN', 'test-agent', true);
+        const builder = new ClashConfigBuilder(input, 'all', [], null, 'zh-CN', true);
         const yamlText = await builder.build();
         const built = yaml.load(yamlText);
 

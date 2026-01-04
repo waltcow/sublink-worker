@@ -21,7 +21,7 @@ export const formLogicFn = (t) => {
       externalController: "",
       externalUiDownloadUrl: "",
       ruleProviderFormat: "yaml",
-      configType: "singbox",
+      configType: "clash",
       configEditor: "",
       savingConfig: false,
       currentConfigId: "",
@@ -133,7 +133,7 @@ export const formLogicFn = (t) => {
         this.ruleProviderFormat =
           localStorage.getItem("ruleProviderFormat") || "yaml";
         this.configEditor = localStorage.getItem("configEditor") || "";
-        this.configType = localStorage.getItem("configType") || "singbox";
+        this.configType = localStorage.getItem("configType") || "clash";
         this.customShortCode = localStorage.getItem("customShortCode") || "";
         this.selectedPredefinedRule =
           localStorage.getItem("selectedPredefinedRule") || "balanced";
@@ -778,7 +778,6 @@ export const formLogicFn = (t) => {
 
           this.generatedLinks = {
             xray: origin + "/xray?" + queryString,
-            singbox: origin + "/singbox?" + queryString,
             clash: origin + "/clash?" + queryString,
             surge: origin + "/surge?" + queryString,
             quanx: origin + "/quanx?" + queryString,
@@ -846,7 +845,6 @@ export const formLogicFn = (t) => {
               // Map types to their corresponding path prefixes
               const prefixMap = {
                 xray: "x",
-                singbox: "b",
                 clash: "c",
                 surge: "s",
                 quanx: "q",
@@ -897,7 +895,7 @@ export const formLogicFn = (t) => {
           const url = new URL(text);
           // Check if it matches our short link pattern: /[bcxsq]/[code]
           const pathMatch = url.pathname.match(
-            /^\/([bcxsq])\/([a-zA-Z0-9_-]+)$/,
+            /^\/([cxsq])\/([a-zA-Z0-9_-]+)$/,
           );
           if (pathMatch) {
             return true;
@@ -905,7 +903,7 @@ export const formLogicFn = (t) => {
 
           // Check if it's a full subscription URL with query params
           const fullMatch = url.pathname.match(
-            /^\/(singbox|clash|xray|surge|quanx)$/,
+            /^\/(clash|xray|surge|quanx)$/,
           );
           if (fullMatch && url.search) {
             return true;
@@ -935,7 +933,7 @@ export const formLogicFn = (t) => {
 
           // Check if it's a short link
           const shortMatch = urlToParse.pathname.match(
-            /^\/([bcxsq])\/([a-zA-Z0-9_-]+)$/,
+            /^\/([cxsq])\/([a-zA-Z0-9_-]+)$/,
           );
 
           if (shortMatch) {

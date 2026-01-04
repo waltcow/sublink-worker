@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { SingboxConfigBuilder } from '../src/builders/SingboxConfigBuilder.js';
+
 import { ClashConfigBuilder } from '../src/builders/ClashConfigBuilder.js';
 import { parseSurgeIni } from '../src/parsers/subscription/subscriptionContentParser.js';
 import { convertSurgeProxyToObject } from '../src/parsers/convertSurgeProxyToObject.js';
@@ -148,26 +148,6 @@ FINAL,DIRECT
     });
 
     describe('Integration with builders', () => {
-        it('should work with SingboxConfigBuilder', async () => {
-            const builder = new SingboxConfigBuilder(
-                sampleSurgeConfig,
-                [],
-                [],
-                null,
-                'zh-CN',
-                null,
-                false
-            );
-
-            const result = await builder.build();
-            const proxies = result.outbounds.filter(o => o.server);
-
-            expect(proxies.length).toBe(5);
-            expect(proxies.map(p => p.tag)).toContain('HK-SS');
-            expect(proxies.map(p => p.tag)).toContain('US-VMess');
-            expect(proxies.map(p => p.tag)).toContain('JP-Trojan');
-        });
-
         it('should work with ClashConfigBuilder', async () => {
             const builder = new ClashConfigBuilder(
                 sampleSurgeConfig,

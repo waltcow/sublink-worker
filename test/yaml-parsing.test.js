@@ -1,7 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import yaml from 'js-yaml';
 import { createTranslator } from '../src/i18n/index.js';
-import { SingboxConfigBuilder } from '../src/builders/SingboxConfigBuilder.js';
 import { BaseConfigBuilder } from '../src/builders/BaseConfigBuilder.js';
 
 // Test cases inline (from test-cases.yaml)

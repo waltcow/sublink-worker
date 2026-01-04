@@ -75,7 +75,7 @@ export class ClashConfigBuilder extends BaseConfigBuilder {
 
   /**
    * Check if subscription format is compatible for use as Clash proxy-provider
-   * @param {'clash'|'singbox'|'unknown'} format - Detected subscription format
+   * @param {'clash'|'unknown'} format - Detected subscription format
    * @returns {boolean} - True if format is Clash YAML and enableProviders is true
    */
   isCompatibleProviderFormat(format) {
