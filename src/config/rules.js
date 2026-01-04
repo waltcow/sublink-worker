@@ -13,7 +13,7 @@ export const UNIFIED_RULES = [
 	},
 	{
 		name: 'AI Services',
-		site_rules: ['category-ai-!cn',],
+		site_rules: ['category-ai-!cn'],
 		ip_rules: []
 	},
 	{

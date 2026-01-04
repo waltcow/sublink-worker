@@ -6,8 +6,9 @@ import { groupProxiesByCountry, groupProxiesByKeyword } from '../utils.js';
 const QUANX_RULE_TAG_MAP = {
 	'category-ads-all': 'Advertising/Advertising.list',
 	'category-ai-!cn': [
-		'OpenAI/OpenAI.list',	
-		'Claude/Claude.list'
+		'OpenAI/OpenAI.list',
+		'Claude/Claude.list',
+		'Gemini/Gemini.list'
 	],
 	'category-cryptocurrency': [
 		'Cryptocurrency/Cryptocurrency.list',
@@ -359,10 +360,10 @@ export class QuanxConfigBuilder extends BaseConfigBuilder {
 			return ['direct', 'Outside', ...appleRegions];
 		}
 
-		// AI Suite: Outside, 地区特定顺序
+		// AI Suite: Outside, proxy, 地区特定顺序
 		if (policyName === 'AI Suite') {
 			const aiRegions = ['United States', 'Taiwan', 'Japan'].filter(r => orderedRegions.includes(r));
-			return ['Outside', ...aiRegions];
+			return ['Outside', 'proxy', ...aiRegions];
 		}
 
 		// China Media: Mainland, Outside, direct
