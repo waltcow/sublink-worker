@@ -4983,21 +4983,21 @@ Gv8zIRr/MyEa/zMhGv8zIRr/MyEa/zMhGv8zIRr/MyEa/zMhGv8zIRr/MyEa/zMhGv8zIRr/MyEa/zMh
 Gv8zIRr/MyEa/zIhGv81Ixz/Oyki/kw9Of9TR0LtS0A6w05CPKBTS0d9amdhVJ2WliL///8CAAAAAAAAAAAAAAAAfwAAAn8/
 PwQAAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
 AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=
-`.replace(/\s+/g, '');
+`.replace(/\s+/g, "");
 
 const decodeBase64 = (input) => {
-    if (typeof atob === 'function') {
-        const binary = atob(input);
-        const bytes = new Uint8Array(binary.length);
-        for (let i = 0; i < binary.length; i++) {
-            bytes[i] = binary.charCodeAt(i);
-        }
-        return bytes;
+  if (typeof atob === "function") {
+    const binary = atob(input);
+    const bytes = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i++) {
+      bytes[i] = binary.charCodeAt(i);
     }
-    if (typeof Buffer !== 'undefined') {
-        return new Uint8Array(Buffer.from(input, 'base64'));
-    }
-    throw new Error('No base64 decoder available for favicon.');
+    return bytes;
+  }
+  if (typeof Buffer !== "undefined") {
+    return new Uint8Array(Buffer.from(input, "base64"));
+  }
+  throw new Error("No base64 decoder available for favicon.");
 };
 
 export const faviconBytes = decodeBase64(FAVICON_BASE64);

@@ -1,486 +1,549 @@
-import { ProxyParser } from '../parsers/index.js';
-import { deepCopy, tryDecodeSubscriptionLines, decodeBase64 } from '../utils.js';
-import { createTranslator } from '../i18n/index.js';
-import { generateRules, getOutbounds, PREDEFINED_RULE_SETS } from '../config/index.js';
+import { ProxyParser } from "../parsers/index.js";
+import {
+  deepCopy,
+  tryDecodeSubscriptionLines,
+  decodeBase64,
+} from "../utils.js";
+import { createTranslator } from "../i18n/index.js";
+import {
+  generateRules,
+  getOutbounds,
+  PREDEFINED_RULE_SETS,
+} from "../config/index.js";
 
 export class BaseConfigBuilder {
-    constructor(inputString, baseConfig, lang, groupByCountry = false, keywordGroups = [], defaultExclude = [], includeCountries = [], kv = null, subscriptionCacheTtl = 300, subscriptionTimeout = 10000, subscriptionMaxRetries = 3) {
-        this.inputString = inputString;
-        this.config = deepCopy(baseConfig);
-        this.customRules = [];
-        this.selectedRules = [];
-        this.t = createTranslator(lang);
-        this.appliedOverrideKeys = new Set();
-        this.groupByCountry = groupByCountry;
-        this.keywordGroups = keywordGroups || [];  // Keyword group definitions
-        this.filteredProxyNames = new Set();  // Names of proxies filtered by keyword groups
-        this.providerUrls = [];  // URLs to use as providers (auto-sync)
-        this.defaultExclude = defaultExclude || [];  // Global default exclude keywords
-        this.includeCountries = includeCountries || [];  // Countries to include (by country code), empty means include all
-        this.kv = kv;  // KV store for caching subscriptions
-        this.subscriptionCacheTtl = subscriptionCacheTtl;  // Cache TTL in seconds
-        this.subscriptionTimeout = subscriptionTimeout;  // Request timeout in milliseconds
-        this.subscriptionMaxRetries = subscriptionMaxRetries;  // Maximum retries
-    }
+  constructor(
+    inputString,
+    baseConfig,
+    lang,
+    groupByCountry = false,
+    keywordGroups = [],
+    defaultExclude = [],
+    includeCountries = [],
+    kv = null,
+    subscriptionCacheTtl = 300,
+    subscriptionTimeout = 10000,
+    subscriptionMaxRetries = 3,
+  ) {
+    this.inputString = inputString;
+    this.config = deepCopy(baseConfig);
+    this.customRules = [];
+    this.selectedRules = [];
+    this.t = createTranslator(lang);
+    this.appliedOverrideKeys = new Set();
+    this.groupByCountry = groupByCountry;
+    this.keywordGroups = keywordGroups || []; // Keyword group definitions
+    this.filteredProxyNames = new Set(); // Names of proxies filtered by keyword groups
+    this.providerUrls = []; // URLs to use as providers (auto-sync)
+    this.defaultExclude = defaultExclude || []; // Global default exclude keywords
+    this.includeCountries = includeCountries || []; // Countries to include (by country code), empty means include all
+    this.kv = kv; // KV store for caching subscriptions
+    this.subscriptionCacheTtl = subscriptionCacheTtl; // Cache TTL in seconds
+    this.subscriptionTimeout = subscriptionTimeout; // Request timeout in milliseconds
+    this.subscriptionMaxRetries = subscriptionMaxRetries; // Maximum retries
+  }
 
-    /**
-     * Parse URL hash for subscription configuration
-     * Format: #prefix
-     * @param {string} url - Full URL with hash
-     * @returns {{prefix: string, exclude: string[]}} - Parsed configuration
-     */
-    parseUrlHash(url) {
-        const config = { prefix: '', exclude: [...this.defaultExclude] };
+  /**
+   * Parse URL hash for subscription configuration
+   * Format: #prefix
+   * @param {string} url - Full URL with hash
+   * @returns {{prefix: string, exclude: string[]}} - Parsed configuration
+   */
+  parseUrlHash(url) {
+    const config = { prefix: "", exclude: [...this.defaultExclude] };
 
-        try {
-            const urlObj = new URL(url);
-            const hash = urlObj.hash;
+    try {
+      const urlObj = new URL(url);
+      const hash = urlObj.hash;
 
-            if (!hash || hash.length <= 1) {
-                return config;
-            }
-
-            // Remove the leading '#'
-            const hashContent = hash.substring(1);
-
-            // Split by '&' to get parts
-            const parts = hashContent.split('&');
-
-            // First part is the prefix
-            if (parts[0]) {
-                config.prefix = decodeURIComponent(parts[0].trim());
-            }
-
-        } catch (e) {
-            console.warn('Failed to parse URL hash:', e);
-        }
-
+      if (!hash || hash.length <= 1) {
         return config;
+      }
+
+      // Remove the leading '#'
+      const hashContent = hash.substring(1);
+
+      // Split by '&' to get parts
+      const parts = hashContent.split("&");
+
+      // First part is the prefix
+      if (parts[0]) {
+        config.prefix = decodeURIComponent(parts[0].trim());
+      }
+    } catch (e) {
+      console.warn("Failed to parse URL hash:", e);
     }
 
-    /**
-     * Apply prefix to proxy name
-     * @param {string} name - Original proxy name
-     * @param {string} prefix - Prefix to add
-     * @returns {string} - Prefixed name
-     */
-    applyProxyPrefix(name, prefix) {
-        if (!prefix || !name) {
-            return name;
+    return config;
+  }
+
+  /**
+   * Apply prefix to proxy name
+   * @param {string} name - Original proxy name
+   * @param {string} prefix - Prefix to add
+   * @returns {string} - Prefixed name
+   */
+  applyProxyPrefix(name, prefix) {
+    if (!prefix || !name) {
+      return name;
+    }
+    return `${prefix}-${name}`;
+  }
+
+  /**
+   * Check if proxy should be excluded based on exclude keywords
+   * @param {string} name - Proxy name
+   * @param {string[]} excludeKeywords - List of keywords to exclude
+   * @returns {boolean} - True if should be excluded
+   */
+  shouldExcludeProxy(name, excludeKeywords) {
+    if (!excludeKeywords || excludeKeywords.length === 0 || !name) {
+      return false;
+    }
+
+    const lowerName = name.toLowerCase();
+    return excludeKeywords.some((keyword) =>
+      lowerName.includes(keyword.toLowerCase()),
+    );
+  }
+
+  /**
+   * Check if proxy should be excluded based on country filter
+   * @param {string} name - Proxy name
+   * @returns {boolean} - True if should be excluded
+   */
+  shouldExcludeProxyByCountry(name) {
+    // If includeCountries is empty, include all proxies
+    if (!this.includeCountries || this.includeCountries.length === 0 || !name) {
+      return false;
+    }
+
+    // Import parseCountryFromNodeName dynamically
+    const { parseCountryFromNodeName } = require("../utils.js");
+    const countryInfo = parseCountryFromNodeName(name);
+
+    // If country cannot be detected, exclude it (only include known countries)
+    if (!countryInfo || !countryInfo.code) {
+      return true;
+    }
+
+    // Only include proxies whose country code is in the include list
+    const isIncluded = this.includeCountries.some(
+      (includeCode) =>
+        includeCode.toUpperCase() === countryInfo.code.toUpperCase(),
+    );
+
+    return !isIncluded; // Exclude if not in include list
+  }
+
+  /**
+   * Get proxy name from proxy object (supports both 'tag' and 'name' fields)
+   * @param {object} proxy - Proxy object
+   * @returns {string|null} - Proxy name or null
+   */
+  getProxyIdentifier(proxy) {
+    return proxy?.tag || proxy?.name || null;
+  }
+
+  /**
+   * Set proxy name on proxy object (supports both 'tag' and 'name' fields)
+   * @param {object} proxy - Proxy object
+   * @param {string} name - New name to set
+   */
+  setProxyIdentifier(proxy, name) {
+    if (!proxy) return;
+    if (proxy.tag !== undefined) {
+      proxy.tag = name;
+    }
+    if (proxy.name !== undefined) {
+      proxy.name = name;
+    }
+  }
+
+  async build() {
+    const customItems = await this.parseCustomItems();
+    this.addCustomItems(customItems);
+    this.addSelectors();
+    return this.formatConfig();
+  }
+
+  async parseCustomItems() {
+    const input = this.inputString || "";
+    const parsedItems = [];
+
+    // Import the content parser for direct input parsing
+    const { parseSubscriptionContent } =
+      await import("../parsers/subscription/subscriptionContentParser.js");
+
+    // Try to parse the entire input as a config format (Sing-Box JSON or Clash YAML)
+    const directResult = parseSubscriptionContent(input);
+    if (directResult && typeof directResult === "object" && directResult.type) {
+      // It's a parsed config (singboxConfig or yamlConfig)
+      if (directResult.config) {
+        this.applyConfigOverrides(directResult.config);
+      }
+      if (Array.isArray(directResult.proxies)) {
+        for (const proxy of directResult.proxies) {
+          if (proxy && proxy.tag) {
+            parsedItems.push(proxy);
+          }
         }
-        return `${prefix}-${name}`;
+        if (parsedItems.length > 0) return parsedItems;
+      }
     }
 
-    /**
-     * Check if proxy should be excluded based on exclude keywords
-     * @param {string} name - Proxy name
-     * @param {string[]} excludeKeywords - List of keywords to exclude
-     * @returns {boolean} - True if should be excluded
-     */
-    shouldExcludeProxy(name, excludeKeywords) {
-        if (!excludeKeywords || excludeKeywords.length === 0 || !name) {
-            return false;
-        }
-
-        const lowerName = name.toLowerCase();
-        return excludeKeywords.some(keyword =>
-            lowerName.includes(keyword.toLowerCase())
-        );
-    }
-
-    /**
-     * Check if proxy should be excluded based on country filter
-     * @param {string} name - Proxy name
-     * @returns {boolean} - True if should be excluded
-     */
-    shouldExcludeProxyByCountry(name) {
-        // If includeCountries is empty, include all proxies
-        if (!this.includeCountries || this.includeCountries.length === 0 || !name) {
-            return false;
-        }
-
-        // Import parseCountryFromNodeName dynamically
-        const { parseCountryFromNodeName } = require('../utils.js');
-        const countryInfo = parseCountryFromNodeName(name);
-
-        // If country cannot be detected, exclude it (only include known countries)
-        if (!countryInfo || !countryInfo.code) {
-            return true;
-        }
-
-        // Only include proxies whose country code is in the include list
-        const isIncluded = this.includeCountries.some(includeCode =>
-            includeCode.toUpperCase() === countryInfo.code.toUpperCase()
-        );
-
-        return !isIncluded;  // Exclude if not in include list
-    }
-
-    /**
-     * Get proxy name from proxy object (supports both 'tag' and 'name' fields)
-     * @param {object} proxy - Proxy object
-     * @returns {string|null} - Proxy name or null
-     */
-    getProxyIdentifier(proxy) {
-        return proxy?.tag || proxy?.name || null;
-    }
-
-    /**
-     * Set proxy name on proxy object (supports both 'tag' and 'name' fields)
-     * @param {object} proxy - Proxy object
-     * @param {string} name - New name to set
-     */
-    setProxyIdentifier(proxy, name) {
-        if (!proxy) return;
-        if (proxy.tag !== undefined) {
-            proxy.tag = name;
-        }
-        if (proxy.name !== undefined) {
-            proxy.name = name;
-        }
-    }
-
-    async build() {
-        const customItems = await this.parseCustomItems();
-        this.addCustomItems(customItems);
-        this.addSelectors();
-        return this.formatConfig();
-    }
-
-    async parseCustomItems() {
-        const input = this.inputString || '';
-        const parsedItems = [];
-
-        // Import the content parser for direct input parsing
-        const { parseSubscriptionContent } = await import('../parsers/subscription/subscriptionContentParser.js');
-
-        // Try to parse the entire input as a config format (Sing-Box JSON or Clash YAML)
-        const directResult = parseSubscriptionContent(input);
-        if (directResult && typeof directResult === 'object' && directResult.type) {
-            // It's a parsed config (singboxConfig or yamlConfig)
-            if (directResult.config) {
-                this.applyConfigOverrides(directResult.config);
+    // If direct parsing didn't work, check for Base64 encoded content
+    const isBase64Like =
+      /^[A-Za-z0-9+/=\r\n]+$/.test(input) &&
+      input.replace(/[\r\n]/g, "").length % 4 === 0;
+    if (isBase64Like) {
+      try {
+        const sanitized = input.replace(/\s+/g, "");
+        const decodedWhole = decodeBase64(sanitized);
+        if (typeof decodedWhole === "string") {
+          const decodedResult = parseSubscriptionContent(decodedWhole);
+          if (
+            decodedResult &&
+            typeof decodedResult === "object" &&
+            decodedResult.type
+          ) {
+            if (decodedResult.config) {
+              this.applyConfigOverrides(decodedResult.config);
             }
-            if (Array.isArray(directResult.proxies)) {
-                for (const proxy of directResult.proxies) {
-                    if (proxy && proxy.tag) {
-                        parsedItems.push(proxy);
-                    }
+            if (Array.isArray(decodedResult.proxies)) {
+              for (const proxy of decodedResult.proxies) {
+                if (proxy && proxy.tag) {
+                  parsedItems.push(proxy);
                 }
-                if (parsedItems.length > 0) return parsedItems;
+              }
+              if (parsedItems.length > 0) return parsedItems;
             }
+          }
         }
+      } catch (_) {}
+    }
 
-        // If direct parsing didn't work, check for Base64 encoded content
-        const isBase64Like = /^[A-Za-z0-9+/=\r\n]+$/.test(input) && input.replace(/[\r\n]/g, '').length % 4 === 0;
-        if (isBase64Like) {
-            try {
-                const sanitized = input.replace(/\s+/g, '');
-                const decodedWhole = decodeBase64(sanitized);
-                if (typeof decodedWhole === 'string') {
-                    const decodedResult = parseSubscriptionContent(decodedWhole);
-                    if (decodedResult && typeof decodedResult === 'object' && decodedResult.type) {
-                        if (decodedResult.config) {
-                            this.applyConfigOverrides(decodedResult.config);
-                        }
-                        if (Array.isArray(decodedResult.proxies)) {
-                            for (const proxy of decodedResult.proxies) {
-                                if (proxy && proxy.tag) {
-                                    parsedItems.push(proxy);
-                                }
-                            }
-                            if (parsedItems.length > 0) return parsedItems;
-                        }
-                    }
+    // Otherwise, line-by-line processing (URLs, subscription content, remote lists, etc.)
+    const urls = input.split("\n").filter((url) => url.trim() !== "");
+    for (const url of urls) {
+      let processedUrls = tryDecodeSubscriptionLines(url);
+      if (!Array.isArray(processedUrls)) {
+        processedUrls = [processedUrls];
+      }
+
+      for (const processedUrl of processedUrls) {
+        const trimmedUrl =
+          typeof processedUrl === "string" ? processedUrl.trim() : "";
+
+        // Check if it's an HTTP(S) URL - may use as provider if format matches
+        if (
+          trimmedUrl.startsWith("http://") ||
+          trimmedUrl.startsWith("https://")
+        ) {
+          const { fetchSubscriptionWithFormat } =
+            await import("../parsers/subscription/httpSubscriptionFetcher.js");
+
+          // Parse URL hash for subscription configuration (prefix)
+          const hashConfig = this.parseUrlHash(trimmedUrl);
+
+          try {
+            const fetchResult = await fetchSubscriptionWithFormat(trimmedUrl, {
+              kv: this.kv,
+              cacheTtl: this.subscriptionCacheTtl,
+              timeout: this.subscriptionTimeout,
+              maxRetries: this.subscriptionMaxRetries,
+            });
+            if (fetchResult) {
+              const { content, format, url: originalUrl } = fetchResult;
+
+              // If format is compatible with target client, use as provider
+              if (this.isCompatibleProviderFormat(format)) {
+                this.providerUrls.push(originalUrl);
+                continue; // Skip parsing, will be used as provider
+              }
+
+              // Otherwise parse the content as usual
+              const result = parseSubscriptionContent(content);
+              if (
+                result &&
+                typeof result === "object" &&
+                (result.type === "yamlConfig" ||
+                  result.type === "singboxConfig" ||
+                  result.type === "surgeConfig")
+              ) {
+                if (result.config) {
+                  this.applyConfigOverrides(result.config);
                 }
-            } catch (_) { }
-        }
+                if (Array.isArray(result.proxies)) {
+                  result.proxies.forEach((proxy) => {
+                    if (proxy && typeof proxy === "object") {
+                      const proxyName = this.getProxyIdentifier(proxy);
+                      if (!proxyName) return;
 
-        // Otherwise, line-by-line processing (URLs, subscription content, remote lists, etc.)
-        const urls = input.split('\n').filter(url => url.trim() !== '');
-        for (const url of urls) {
-            let processedUrls = tryDecodeSubscriptionLines(url);
-            if (!Array.isArray(processedUrls)) {
-                processedUrls = [processedUrls];
-            }
-
-            for (const processedUrl of processedUrls) {
-                const trimmedUrl = typeof processedUrl === 'string' ? processedUrl.trim() : '';
-
-                // Check if it's an HTTP(S) URL - may use as provider if format matches
-                if (trimmedUrl.startsWith('http://') || trimmedUrl.startsWith('https://')) {
-                    const { fetchSubscriptionWithFormat } = await import('../parsers/subscription/httpSubscriptionFetcher.js');
-
-                    // Parse URL hash for subscription configuration (prefix)
-                    const hashConfig = this.parseUrlHash(trimmedUrl);
-
-                    try {
-                        const fetchResult = await fetchSubscriptionWithFormat(trimmedUrl, {
-                            kv: this.kv,
-                            cacheTtl: this.subscriptionCacheTtl,
-                            timeout: this.subscriptionTimeout,
-                            maxRetries: this.subscriptionMaxRetries
-                        });
-                        if (fetchResult) {
-                            const { content, format, url: originalUrl } = fetchResult;
-
-                            // If format is compatible with target client, use as provider
-                            if (this.isCompatibleProviderFormat(format)) {
-                                this.providerUrls.push(originalUrl);
-                                continue;  // Skip parsing, will be used as provider
-                            }
-
-                            // Otherwise parse the content as usual
-                            const result = parseSubscriptionContent(content);
-                            if (result && typeof result === 'object' && (result.type === 'yamlConfig' || result.type === 'singboxConfig' || result.type === 'surgeConfig')) {
-                                if (result.config) {
-                                    this.applyConfigOverrides(result.config);
-                                }
-                                if (Array.isArray(result.proxies)) {
-                                    result.proxies.forEach(proxy => {
-                                        if (proxy && typeof proxy === 'object') {
-                                            const proxyName = this.getProxyIdentifier(proxy);
-                                            if (!proxyName) return;
-
-                                            // Apply exclude filter
-                                            if (this.shouldExcludeProxy(proxyName, hashConfig.exclude)) {
-                                                return; // Skip this proxy
-                                            }
-                                            // Apply country exclude filter
-                                            if (this.shouldExcludeProxyByCountry(proxyName)) {
-                                                return; // Skip this proxy
-                                            }
-                                            // Apply prefix to proxy name
-                                            if (hashConfig.prefix) {
-                                                const newName = this.applyProxyPrefix(proxyName, hashConfig.prefix);
-                                                this.setProxyIdentifier(proxy, newName);
-                                            }
-                                            parsedItems.push(proxy);
-                                        }
-                                    });
-                                }
-                                continue;
-                            }
-                            // Handle array of URIs or other formats
-                            if (Array.isArray(result)) {
-                                for (const item of result) {
-                                    if (item && typeof item === 'object') {
-                                        const itemName = this.getProxyIdentifier(item);
-                                        if (!itemName) continue;
-
-                                        // Apply exclude filter
-                                        if (this.shouldExcludeProxy(itemName, hashConfig.exclude)) {
-                                            continue; // Skip this proxy
-                                        }
-                                        // Apply country exclude filter
-                                        if (this.shouldExcludeProxyByCountry(itemName)) {
-                                            continue; // Skip this proxy
-                                        }
-                                        // Apply prefix to proxy name
-                                        if (hashConfig.prefix) {
-                                            const newName = this.applyProxyPrefix(itemName, hashConfig.prefix);
-                                            this.setProxyIdentifier(item, newName);
-                                        }
-                                        parsedItems.push(item);
-                                    } else if (typeof item === 'string') {
-                                        const subResult = await ProxyParser.parse(item);
-                                        if (subResult) {
-                                            const subName = this.getProxyIdentifier(subResult);
-                                            if (!subName) continue;
-
-                                            // Apply exclude filter
-                                            if (this.shouldExcludeProxy(subName, hashConfig.exclude)) {
-                                                continue; // Skip this proxy
-                                            }
-                                            // Apply country exclude filter
-                                            if (this.shouldExcludeProxyByCountry(subName)) {
-                                                continue; // Skip this proxy
-                                            }
-                                            // Apply prefix to proxy name
-                                            if (hashConfig.prefix) {
-                                                const newName = this.applyProxyPrefix(subName, hashConfig.prefix);
-                                                this.setProxyIdentifier(subResult, newName);
-                                            }
-                                            parsedItems.push(subResult);
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    } catch (error) {
-                        console.error('Error processing HTTP subscription:', error);
+                      // Apply exclude filter
+                      if (
+                        this.shouldExcludeProxy(proxyName, hashConfig.exclude)
+                      ) {
+                        return; // Skip this proxy
+                      }
+                      // Apply country exclude filter
+                      if (this.shouldExcludeProxyByCountry(proxyName)) {
+                        return; // Skip this proxy
+                      }
+                      // Apply prefix to proxy name
+                      if (hashConfig.prefix) {
+                        const newName = this.applyProxyPrefix(
+                          proxyName,
+                          hashConfig.prefix,
+                        );
+                        this.setProxyIdentifier(proxy, newName);
+                      }
+                      parsedItems.push(proxy);
                     }
-                    continue;
+                  });
                 }
+                continue;
+              }
+              // Handle array of URIs or other formats
+              if (Array.isArray(result)) {
+                for (const item of result) {
+                  if (item && typeof item === "object") {
+                    const itemName = this.getProxyIdentifier(item);
+                    if (!itemName) continue;
 
-                // Non-HTTP URLs (protocol URIs like ss://, vmess://, etc.)
-                const result = await ProxyParser.parse(processedUrl);
-                // Handle yamlConfig, singboxConfig, and surgeConfig types (they have the same structure)
-                if (result && typeof result === 'object' && (result.type === 'yamlConfig' || result.type === 'singboxConfig' || result.type === 'surgeConfig')) {
-                    if (result.config) {
-                        this.applyConfigOverrides(result.config);
+                    // Apply exclude filter
+                    if (this.shouldExcludeProxy(itemName, hashConfig.exclude)) {
+                      continue; // Skip this proxy
                     }
-                    if (Array.isArray(result.proxies)) {
-                        result.proxies.forEach(proxy => {
-                            if (proxy && typeof proxy === 'object' && proxy.tag) {
-                                parsedItems.push(proxy);
-                            }
-                        });
+                    // Apply country exclude filter
+                    if (this.shouldExcludeProxyByCountry(itemName)) {
+                      continue; // Skip this proxy
                     }
-                    continue;
-                }
-                if (Array.isArray(result)) {
-                    for (const item of result) {
-                        if (item && typeof item === 'object' && item.tag) {
-                            parsedItems.push(item);
-                        } else if (typeof item === 'string') {
-                            const subResult = await ProxyParser.parse(item);
-                            if (subResult) {
-                                parsedItems.push(subResult);
-                            }
-                        }
+                    // Apply prefix to proxy name
+                    if (hashConfig.prefix) {
+                      const newName = this.applyProxyPrefix(
+                        itemName,
+                        hashConfig.prefix,
+                      );
+                      this.setProxyIdentifier(item, newName);
                     }
-                } else if (result) {
-                    parsedItems.push(result);
+                    parsedItems.push(item);
+                  } else if (typeof item === "string") {
+                    const subResult = await ProxyParser.parse(item);
+                    if (subResult) {
+                      const subName = this.getProxyIdentifier(subResult);
+                      if (!subName) continue;
+
+                      // Apply exclude filter
+                      if (
+                        this.shouldExcludeProxy(subName, hashConfig.exclude)
+                      ) {
+                        continue; // Skip this proxy
+                      }
+                      // Apply country exclude filter
+                      if (this.shouldExcludeProxyByCountry(subName)) {
+                        continue; // Skip this proxy
+                      }
+                      // Apply prefix to proxy name
+                      if (hashConfig.prefix) {
+                        const newName = this.applyProxyPrefix(
+                          subName,
+                          hashConfig.prefix,
+                        );
+                        this.setProxyIdentifier(subResult, newName);
+                      }
+                      parsedItems.push(subResult);
+                    }
+                  }
                 }
+              }
             }
+          } catch (error) {
+            console.error("Error processing HTTP subscription:", error);
+          }
+          continue;
         }
 
-        return parsedItems;
-    }
-
-    /**
-     * Check if subscription format is compatible for use as a provider
-     * Override in child classes to enable provider support
-     * @param {'clash'|'singbox'|'unknown'} format - Detected subscription format
-     * @returns {boolean} - True if format can be used as provider
-     */
-    isCompatibleProviderFormat(format) {
-        return false;  // Default: no provider support
-    }
-
-    applyConfigOverrides(overrides) {
-        if (!overrides || typeof overrides !== 'object') {
-            return;
+        // Non-HTTP URLs (protocol URIs like ss://, vmess://, etc.)
+        const result = await ProxyParser.parse(processedUrl);
+        // Handle yamlConfig, singboxConfig, and surgeConfig types (they have the same structure)
+        if (
+          result &&
+          typeof result === "object" &&
+          (result.type === "yamlConfig" ||
+            result.type === "singboxConfig" ||
+            result.type === "surgeConfig")
+        ) {
+          if (result.config) {
+            this.applyConfigOverrides(result.config);
+          }
+          if (Array.isArray(result.proxies)) {
+            result.proxies.forEach((proxy) => {
+              if (proxy && typeof proxy === "object" && proxy.tag) {
+                parsedItems.push(proxy);
+              }
+            });
+          }
+          continue;
         }
-
-        // Allow incoming Clash YAML to override most fields, including 'proxy-groups'.
-        // Still block 'proxies' (handled by dedicated parser), and keep ignoring
-        // 'rules' and 'rule-providers' which are generated by our own logic.
-        const blacklistedKeys = new Set(['proxies', 'rules', 'rule-providers']);
-
-        Object.entries(overrides).forEach(([key, value]) => {
-            if (blacklistedKeys.has(key)) {
-                return;
+        if (Array.isArray(result)) {
+          for (const item of result) {
+            if (item && typeof item === "object" && item.tag) {
+              parsedItems.push(item);
+            } else if (typeof item === "string") {
+              const subResult = await ProxyParser.parse(item);
+              if (subResult) {
+                parsedItems.push(subResult);
+              }
             }
-            if (value === undefined) {
-                delete this.config[key];
-                this.appliedOverrideKeys.add(key);
-            } else {
-                this.config[key] = deepCopy(value);
-                this.appliedOverrideKeys.add(key);
-            }
-        });
-    }
-
-    hasConfigOverride(key) {
-        return this.appliedOverrideKeys?.has(key);
-    }
-
-    getOutboundsList() {
-        let outbounds;
-        if (typeof this.selectedRules === 'string' && PREDEFINED_RULE_SETS[this.selectedRules]) {
-            outbounds = getOutbounds(PREDEFINED_RULE_SETS[this.selectedRules]);
-        } else if (this.selectedRules && Object.keys(this.selectedRules).length > 0) {
-            outbounds = getOutbounds(this.selectedRules);
-        } else {
-            outbounds = getOutbounds(PREDEFINED_RULE_SETS.minimal);
+          }
+        } else if (result) {
+          parsedItems.push(result);
         }
-        return outbounds;
+      }
     }
 
-    getProxyList() {
-        return this.getProxies().map(proxy => this.getProxyName(proxy));
+    return parsedItems;
+  }
+
+  /**
+   * Check if subscription format is compatible for use as a provider
+   * Override in child classes to enable provider support
+   * @param {'clash'|'singbox'|'unknown'} format - Detected subscription format
+   * @returns {boolean} - True if format can be used as provider
+   */
+  isCompatibleProviderFormat(format) {
+    return false; // Default: no provider support
+  }
+
+  applyConfigOverrides(overrides) {
+    if (!overrides || typeof overrides !== "object") {
+      return;
     }
 
-    getProxies() {
-        throw new Error('getProxies must be implemented in child class');
+    // Allow incoming Clash YAML to override most fields, including 'proxy-groups'.
+    // Still block 'proxies' (handled by dedicated parser), and keep ignoring
+    // 'rules' and 'rule-providers' which are generated by our own logic.
+    const blacklistedKeys = new Set(["proxies", "rules", "rule-providers"]);
+
+    Object.entries(overrides).forEach(([key, value]) => {
+      if (blacklistedKeys.has(key)) {
+        return;
+      }
+      if (value === undefined) {
+        delete this.config[key];
+        this.appliedOverrideKeys.add(key);
+      } else {
+        this.config[key] = deepCopy(value);
+        this.appliedOverrideKeys.add(key);
+      }
+    });
+  }
+
+  hasConfigOverride(key) {
+    return this.appliedOverrideKeys?.has(key);
+  }
+
+  getOutboundsList() {
+    let outbounds;
+    if (
+      typeof this.selectedRules === "string" &&
+      PREDEFINED_RULE_SETS[this.selectedRules]
+    ) {
+      outbounds = getOutbounds(PREDEFINED_RULE_SETS[this.selectedRules]);
+    } else if (
+      this.selectedRules &&
+      Object.keys(this.selectedRules).length > 0
+    ) {
+      outbounds = getOutbounds(this.selectedRules);
+    } else {
+      outbounds = getOutbounds(PREDEFINED_RULE_SETS.minimal);
     }
+    return outbounds;
+  }
 
-    getProxyName(proxy) {
-        throw new Error('getProxyName must be implemented in child class');
-    }
+  getProxyList() {
+    return this.getProxies().map((proxy) => this.getProxyName(proxy));
+  }
 
-    convertProxy(proxy) {
-        throw new Error('convertProxy must be implemented in child class');
-    }
+  getProxies() {
+    throw new Error("getProxies must be implemented in child class");
+  }
 
-    addProxyToConfig(proxy) {
-        throw new Error('addProxyToConfig must be implemented in child class');
-    }
+  getProxyName(proxy) {
+    throw new Error("getProxyName must be implemented in child class");
+  }
 
-    addAutoSelectGroup(proxyList) {
-        throw new Error('addAutoSelectGroup must be implemented in child class');
-    }
+  convertProxy(proxy) {
+    throw new Error("convertProxy must be implemented in child class");
+  }
 
-    addNodeSelectGroup(proxyList) {
-        throw new Error('addNodeSelectGroup must be implemented in child class');
-    }
+  addProxyToConfig(proxy) {
+    throw new Error("addProxyToConfig must be implemented in child class");
+  }
 
-    addOutboundGroups(outbounds, proxyList) {
-        throw new Error('addOutboundGroups must be implemented in child class');
-    }
+  addAutoSelectGroup(proxyList) {
+    throw new Error("addAutoSelectGroup must be implemented in child class");
+  }
 
-    addCustomRuleGroups(proxyList) {
-        throw new Error('addCustomRuleGroups must be implemented in child class');
-    }
+  addNodeSelectGroup(proxyList) {
+    throw new Error("addNodeSelectGroup must be implemented in child class");
+  }
 
-    addFallBackGroup(proxyList) {
-        throw new Error('addFallBackGroup must be implemented in child class');
-    }
+  addOutboundGroups(outbounds, proxyList) {
+    throw new Error("addOutboundGroups must be implemented in child class");
+  }
 
-    addCountryGroups() {
-        throw new Error('addCountryGroups must be implemented in child class');
-    }
+  addCustomRuleGroups(proxyList) {
+    throw new Error("addCustomRuleGroups must be implemented in child class");
+  }
 
-    addKeywordGroups() {
-        throw new Error('addKeywordGroups must be implemented in child class');
-    }
+  addFallBackGroup(proxyList) {
+    throw new Error("addFallBackGroup must be implemented in child class");
+  }
 
-    addCustomItems(customItems) {
-        const validItems = customItems.filter(item => item != null);
-        validItems.forEach(item => {
-            if (item?.tag) {
-                const convertedProxy = this.convertProxy(item);
-                if (convertedProxy) {
-                    this.addProxyToConfig(convertedProxy);
-                }
-            }
-        });
-    }
+  addCountryGroups() {
+    throw new Error("addCountryGroups must be implemented in child class");
+  }
 
-    addSelectors() {
-        const outbounds = this.getOutboundsList();
-        const proxyList = this.getProxyList();
+  addKeywordGroups() {
+    throw new Error("addKeywordGroups must be implemented in child class");
+  }
 
-        this.addAutoSelectGroup(proxyList);
-        this.addNodeSelectGroup(proxyList);
-        if (this.groupByCountry) {
-            this.addCountryGroups();
+  addCustomItems(customItems) {
+    const validItems = customItems.filter((item) => item != null);
+    validItems.forEach((item) => {
+      if (item?.tag) {
+        const convertedProxy = this.convertProxy(item);
+        if (convertedProxy) {
+          this.addProxyToConfig(convertedProxy);
         }
-        if (this.keywordGroups && this.keywordGroups.length > 0) {
-            this.addKeywordGroups();
-        }
-        this.addOutboundGroups(outbounds, proxyList);
-        this.addCustomRuleGroups(proxyList);
-        this.addFallBackGroup(proxyList);
-    }
+      }
+    });
+  }
 
-    generateRules() {
-        return generateRules(this.selectedRules, this.customRules);
-    }
+  addSelectors() {
+    const outbounds = this.getOutboundsList();
+    const proxyList = this.getProxyList();
 
-    formatConfig() {
-        throw new Error('formatConfig must be implemented in child class');
+    this.addAutoSelectGroup(proxyList);
+    this.addNodeSelectGroup(proxyList);
+    if (this.groupByCountry) {
+      this.addCountryGroups();
     }
+    if (this.keywordGroups && this.keywordGroups.length > 0) {
+      this.addKeywordGroups();
+    }
+    this.addOutboundGroups(outbounds, proxyList);
+    this.addCustomRuleGroups(proxyList);
+    this.addFallBackGroup(proxyList);
+  }
+
+  generateRules() {
+    return generateRules(this.selectedRules, this.customRules);
+  }
+
+  formatConfig() {
+    throw new Error("formatConfig must be implemented in child class");
+  }
 }

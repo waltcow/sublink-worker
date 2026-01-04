@@ -1,0 +1,25 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+.wrangler/
+
+# Logs
+*.log
+
+# Environment files
+.env
+.env.*
+
+# Cache directories
+.cache/
+.turbo/
+
+# IDE
+.vscode/
+.idea/
+
+# Other
+coverage/
+.DS_Store

@@ -1,2 +1,2 @@
-export { ProxyParser } from './ProxyParser.js';
-export { convertYamlProxyToObject } from './convertYamlProxyToObject.js';
+export { ProxyParser } from "./ProxyParser.js";
+export { convertYamlProxyToObject } from "./convertYamlProxyToObject.js";
