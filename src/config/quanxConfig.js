@@ -57,10 +57,7 @@ export const QUANX_CONFIG = {
   ],
   rewrite_local: [
     "^https?://api\\.m\\.jd\\.com/client\\.action\\?functionId=(wareBusiness|serverConfig|basicConfig) url script-response-body https://raw.githubusercontent.com/zwf234/rules/master/js/jd_price.js",
-    "^https?://ios\\.prod\\.ftl\\.netflix\\.com/iosui/user/.+path=%5B%22videos%22%2C%\\d+%22%2C%22summary%22%5D url script-request-header https://raw.githubusercontent.com/yichahucha/surge/master/nf_rating.js",
-    "^https?://ios\\.prod\\.ftl\\.netflix\\.com/iosui/user/.+path=%5B%22videos%22%2C%\\d+%22%2C%22summary%22%5D url script-response-body https://raw.githubusercontent.com/yichahucha/surge/master/nf_rating.js",
-    "^https?://m?api\\.weibo\\.c(n|om)/2/(statuses/(unread|extend|positives/get|(friends|video)(/|_)timeline)|stories/(video_stream|home_list)|(groups|fangle)/timeline|profile/statuses|comments/build_comments|photo/recommend_list|service/picfeed|searchall|cardlist|page|\\!/photos/pic_recommend_status) url script-response-body https://testingcf.jsdelivr.net/gh/yichahucha/surge@master/wb_ad.js",
-    "^https?://(sdk|wb)app\\.uve\\.weibo\\.com(/interface/sdk/sdkad.php|/wbapplua/wbpullad.lua) url script-response-body https://testingcf.jsdelivr.net/gh/yichahucha/surge@master/wb_launch.js",
+    
   ],
   mitm: {
     passphrase: "Dler",

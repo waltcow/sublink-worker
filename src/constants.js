@@ -8,7 +8,7 @@ export const DOCS_URL = "https://sublink.works";
 
 // SEO and metadata
 export const APP_KEYWORDS =
-  "clash, surge, quanx, subscription, converter, sublink";
+  "clash, quanx, subscription, converter, sublink";
 
 // Subtitles for different languages
 export const APP_SUBTITLE = {

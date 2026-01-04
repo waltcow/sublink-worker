@@ -1,4 +1,3 @@
-import { parseSurgeConfigInput } from "../utils/surgeConfigParser.js";
 
 export const formLogicFn = (t) => {
   window.formData = function () {
@@ -404,18 +403,6 @@ export const formLogicFn = (t) => {
         }
 
         let payloadContent = this.configEditor;
-        if (this.configType === "surge") {
-          try {
-            const { configObject } = parseSurgeConfigInput(this.configEditor);
-            payloadContent = JSON.stringify(configObject);
-          } catch (parseError) {
-            const prefix =
-              window.APP_TRANSLATIONS.configValidationError ||
-              "Config validation error:";
-            alert(`${prefix} ${parseError?.message || ""}`.trim());
-            return;
-          }
-        }
 
         this.savingConfig = true;
         try {
@@ -480,11 +467,6 @@ export const formLogicFn = (t) => {
             this.configValidationState = "success";
             this.configValidationMessage =
               window.APP_TRANSLATIONS.validYamlConfig || "YAML config is valid";
-          } else if (this.configType === "surge") {
-            parseSurgeConfigInput(this.configEditor);
-            this.configValidationState = "success";
-            this.configValidationMessage =
-              window.APP_TRANSLATIONS.validJsonConfig || "JSON config is valid";
           } else {
             JSON.parse(content);
             this.configValidationState = "success";
@@ -777,9 +759,7 @@ export const formLogicFn = (t) => {
           const queryString = params.toString();
 
           this.generatedLinks = {
-            xray: origin + "/xray?" + queryString,
             clash: origin + "/clash?" + queryString,
-            surge: origin + "/surge?" + queryString,
             quanx: origin + "/quanx?" + queryString,
           };
 
@@ -844,9 +824,7 @@ export const formLogicFn = (t) => {
 
               // Map types to their corresponding path prefixes
               const prefixMap = {
-                xray: "x",
                 clash: "c",
-                surge: "s",
                 quanx: "q",
               };
 
@@ -895,7 +873,7 @@ export const formLogicFn = (t) => {
           const url = new URL(text);
           // Check if it matches our short link pattern: /[bcxsq]/[code]
           const pathMatch = url.pathname.match(
-            /^\/([cxsq])\/([a-zA-Z0-9_-]+)$/,
+            /^\/([cq])\/([a-zA-Z0-9_-]+)$/,
           );
           if (pathMatch) {
             return true;
@@ -903,7 +881,7 @@ export const formLogicFn = (t) => {
 
           // Check if it's a full subscription URL with query params
           const fullMatch = url.pathname.match(
-            /^\/(clash|xray|surge|quanx)$/,
+            /^\/(clash|quanx)$/,
           );
           if (fullMatch && url.search) {
             return true;
@@ -933,7 +911,7 @@ export const formLogicFn = (t) => {
 
           // Check if it's a short link
           const shortMatch = urlToParse.pathname.match(
-            /^\/([cxsq])\/([a-zA-Z0-9_-]+)$/,
+            /^\/([cq])\/([a-zA-Z0-9_-]+)$/,
           );
 
           if (shortMatch) {

@@ -8,9 +8,7 @@ import { UNIFIED_RULES, PREDEFINED_RULE_SETS } from '../config/index.js';
 import { COUNTRIES } from '../constants.js';
 
 const LINK_FIELDS = [
-  { key: 'xray', labelKey: 'xrayLink' },
   { key: 'clash', labelKey: 'clashLink' },
-  { key: 'surge', labelKey: 'surgeLink' },
   { key: 'quanx', labelKey: 'quanxLink' }
 ];
 
@@ -452,7 +450,6 @@ export const Form = (props) => {
               </h3>
               <select x-model="configType" class="px-3 py-1.5 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700 text-sm font-medium text-gray-700 dark:text-gray-200 focus:ring-2 focus:ring-primary-500 focus:border-transparent">
                 <option value="clash">Clash (YAML)</option>
-                <option value="surge">Surge (JSON/INI)</option>
               </select>
           </div>
             

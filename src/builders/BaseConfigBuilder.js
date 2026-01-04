@@ -178,7 +178,7 @@ export class BaseConfigBuilder {
     // Try to parse the entire input as a config format (Clash YAML)
     const directResult = parseSubscriptionContent(input);
     if (directResult && typeof directResult === "object" && directResult.type) {
-      // It's a parsed config (yamlConfig or surgeConfig)
+      // It's a parsed config (yamlConfig)
       if (directResult.config) {
         this.applyConfigOverrides(directResult.config);
       }
@@ -267,8 +267,7 @@ export class BaseConfigBuilder {
               if (
                 result &&
                 typeof result === "object" &&
-                (result.type === "yamlConfig" ||
-                  result.type === "surgeConfig")
+                result.type === "yamlConfig"
               ) {
                 if (result.config) {
                   this.applyConfigOverrides(result.config);
@@ -365,12 +364,11 @@ export class BaseConfigBuilder {
 
         // Non-HTTP URLs (protocol URIs like ss://, vmess://, etc.)
         const result = await ProxyParser.parse(processedUrl);
-        // Handle yamlConfig and surgeConfig types (they have the same structure)
+        // Handle yamlConfig type
         if (
           result &&
           typeof result === "object" &&
-          (result.type === "yamlConfig" ||
-            result.type === "surgeConfig")
+          result.type === "yamlConfig"
         ) {
           if (result.config) {
             this.applyConfigOverrides(result.config);

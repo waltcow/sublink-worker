@@ -6,7 +6,6 @@ import { Navbar } from '../components/Navbar.jsx';
 import { Form } from '../components/Form.jsx';
 import { Footer } from '../components/Footer.jsx';
 import { ClashConfigBuilder } from '../builders/ClashConfigBuilder.js';
-import { SurgeConfigBuilder } from '../builders/SurgeConfigBuilder.js';
 import { QuanxConfigBuilder } from '../builders/QuanxConfigBuilder.js';
 import { createTranslator, resolveLanguage } from '../i18n/index.js';
 import { encodeBase64, tryDecodeSubscriptionLines } from '../utils.js';
@@ -53,40 +52,6 @@ export function createApp(bindings = {}) {
         const config = queryGetter('config');
         if (!config) {
             return c.text('Missing config parameter', 400);
-        }
-
-        // Xray logic is distinct enough to handle separately or inside here, 
-        // but since it doesn't share much with others, we handle it simply.
-        if (type === 'xray') {
-            const proxylist = config.split('\n');
-            const finalProxyList = [];
-            for (const proxy of proxylist) {
-                const trimmedProxy = proxy.trim();
-                if (!trimmedProxy) continue;
-
-                if (trimmedProxy.startsWith('http://') || trimmedProxy.startsWith('https://')) {
-                    try {
-                        const response = await fetch(trimmedProxy, { method: 'GET' });
-                        const text = await response.text();
-                        let processed = tryDecodeSubscriptionLines(text, { decodeUriComponent: true });
-                        if (!Array.isArray(processed)) processed = [processed];
-                        finalProxyList.push(...processed.filter(item => typeof item === 'string' && item.trim() !== ''));
-                    } catch (e) {
-                        runtime.logger.warn('Failed to fetch the proxy', e);
-                    }
-                } else {
-                    let processed = tryDecodeSubscriptionLines(trimmedProxy);
-                    if (!Array.isArray(processed)) processed = [processed];
-                    finalProxyList.push(...processed.filter(item => typeof item === 'string' && item.trim() !== ''));
-                }
-            }
-
-            const finalString = finalProxyList.join('\n');
-            if (!finalString) {
-                return c.text('Missing config parameter', 400);
-            }
-
-            return c.text(encodeBase64(finalString));
         }
 
         // Common params for Builders
@@ -142,27 +107,6 @@ export function createApp(bindings = {}) {
             return c.text(builder.formatConfig(), 200, {
                 'Content-Type': 'text/yaml; charset=utf-8'
             });
-        }
-
-        if (type === 'surge') {
-            const builder = new SurgeConfigBuilder(
-                config,
-                selectedRules,
-                customRules,
-                baseConfig,
-                lang,
-                groupByCountry,
-                keywordGroups,
-                defaultExclude,
-                includeCountries,
-                runtime.kv,
-                runtime.config.subscriptionCacheTtl
-            );
-            builder.setSubscriptionUrl(c.req.url);
-            await builder.build();
-
-            c.header('subscription-userinfo', 'upload=0; download=0; total=10737418240; expire=2546249531');
-            return c.text(builder.formatConfig());
         }
 
         if (type === 'quanx') {
@@ -248,25 +192,9 @@ export function createApp(bindings = {}) {
         }
     });
 
-    app.get('/surge', async (c) => {
-        try {
-            return await generateConfigResponse(c, 'surge', (key) => c.req.query(key));
-        } catch (error) {
-            return handleError(c, error, runtime.logger);
-        }
-    });
-
     app.get('/quanx', async (c) => {
         try {
             return await generateConfigResponse(c, 'quanx', (key) => c.req.query(key));
-        } catch (error) {
-            return handleError(c, error, runtime.logger);
-        }
-    });
-
-    app.get('/xray', async (c) => {
-        try {
-            return await generateConfigResponse(c, 'xray', (key) => c.req.query(key));
         } catch (error) {
             return handleError(c, error, runtime.logger);
         }
@@ -295,10 +223,8 @@ export function createApp(bindings = {}) {
     });
 
     // Updated Short Link Handlers (Direct Serve)
-    app.get('/s/:code', handleShortLink('surge'));
     app.get('/q/:code', handleShortLink('quanx'));
     app.get('/c/:code', handleShortLink('clash'));
-    app.get('/x/:code', handleShortLink('xray'));
 
     app.post('/config', async (c) => {
         try {
@@ -331,13 +257,13 @@ export function createApp(bindings = {}) {
 
             const prefix = pathParts[1];
             const shortCode = pathParts[2];
-            if (!['c', 'x', 's', 'q'].includes(prefix)) return c.text(t('invalidShortUrl'), 400);
+            if (!['c', 'q'].includes(prefix)) return c.text(t('invalidShortUrl'), 400);
 
             const shortLinks = requireShortLinkService(services.shortLinks);
             const originalParam = await shortLinks.resolveShortCode(shortCode);
             if (!originalParam) return c.text(t('shortUrlNotFound'), 404);
 
-            const mapping = { c: 'clash', x: 'xray', s: 'surge', q: 'quanx' };
+            const mapping = { c: 'clash', q: 'quanx' };
             const originalUrl = `${urlObj.origin}/${mapping[prefix]}${originalParam}`;
             return c.json({ originalUrl });
         } catch (error) {
