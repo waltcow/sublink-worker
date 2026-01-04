@@ -708,6 +708,28 @@ export class ClashConfigBuilder extends BaseConfigBuilder {
       delete this.config["secret"];
     }
 
-    return yaml.dump(this.config, { lineWidth: -1 });
+    // 按照用户要求的顺序重新组织配置对象
+    // 顺序: proxies -> proxy-groups -> rules -> rule-providers -> 其他字段
+    const orderedConfig = {
+      proxies: this.config.proxies,
+      "proxy-groups": this.config["proxy-groups"],
+      rules: this.config.rules,
+      "rule-providers": this.config["rule-providers"],
+    };
+
+    // 添加其他字段(排除已经添加的核心字段)
+    const coreFields = new Set([
+      "proxies",
+      "proxy-groups",
+      "rules",
+      "rule-providers",
+    ]);
+    Object.keys(this.config).forEach((key) => {
+      if (!coreFields.has(key)) {
+        orderedConfig[key] = this.config[key];
+      }
+    });
+
+    return yaml.dump(orderedConfig, { lineWidth: -1 });
   }
 }
